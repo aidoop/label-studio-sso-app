@@ -35,14 +35,13 @@ app.get("/api/sso/setup", async (req, res) => {
     console.log("[SSO Setup] Starting SSO setup...");
 
     // Query parameter로 사용자 선택
-    const userEmail = req.query.email || "admin@nubison.localhost";
+    const userEmail = req.query.email || "admin@nubison.io";
 
     // 허용된 사용자만 처리 (Label Studio에 생성된 모든 사용자)
     const allowedUsers = [
-      "admin@nubison.localhost",
-      "user1@nubison.localhost",
-      "user2@nubison.localhost",
-      "annotator@nubison.localhost"
+      "admin@nubison.io",
+      "annotator@nubison.io",
+      "manager@nubison.io"
     ];
     if (!allowedUsers.includes(userEmail)) {
       return res.status(403).json({
@@ -52,6 +51,21 @@ app.get("/api/sso/setup", async (req, res) => {
     }
 
     console.log(`[SSO Setup] User: ${userEmail}`);
+
+    // 기존 세션 종료 (Label Studio logout)
+    console.log(`[SSO Setup] Logging out existing session...`);
+    try {
+      await fetch(`${LABEL_STUDIO_URL}/user/logout/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      console.log(`[SSO Setup] Existing session logged out`);
+    } catch (error) {
+      console.log(`[SSO Setup] Logout attempt failed (maybe no active session): ${error.message}`);
+    }
 
     // Label Studio에서 JWT 토큰 발급
     console.log(`[SSO Setup] Requesting token from Label Studio...`);
@@ -88,12 +102,15 @@ app.get("/api/sso/setup", async (req, res) => {
     res.clearCookie("sessionid", {
       domain: ".nubison.localhost",
       path: "/",
+      httpOnly: true,
+      sameSite: "lax",
     });
 
     // CSRF 쿠키도 삭제 (새 세션에 맞춰 재생성되도록)
     res.clearCookie("csrftoken", {
       domain: ".nubison.localhost",
       path: "/",
+      sameSite: "lax",
     });
 
     // JWT 토큰 쿠키 설정 (모든 *.nubison.localhost 서브도메인 공유)

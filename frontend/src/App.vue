@@ -12,36 +12,28 @@
 
         <div class="user-buttons">
           <button
-            @click="setupSSO('admin@nubison.localhost')"
+            @click="setupSSO('admin@nubison.io')"
             :disabled="loading"
             class="user-btn"
           >
             {{ loading ? "Setting up..." : "Login as Admin" }}
-            <small>admin@nubison.localhost</small>
+            <small>admin@nubison.io</small>
           </button>
           <button
-            @click="setupSSO('user1@nubison.localhost')"
-            :disabled="loading"
-            class="user-btn"
-          >
-            {{ loading ? "Setting up..." : "Login as User1" }}
-            <small>user1@nubison.localhost</small>
-          </button>
-          <button
-            @click="setupSSO('user2@nubison.localhost')"
-            :disabled="loading"
-            class="user-btn"
-          >
-            {{ loading ? "Setting up..." : "Login as User2" }}
-            <small>user2@nubison.localhost</small>
-          </button>
-          <button
-            @click="setupSSO('annotator@nubison.localhost')"
+            @click="setupSSO('annotator@nubison.io')"
             :disabled="loading"
             class="user-btn"
           >
             {{ loading ? "Setting up..." : "Login as Annotator" }}
-            <small>annotator@nubison.localhost</small>
+            <small>annotator@nubison.io</small>
+          </button>
+          <button
+            @click="setupSSO('manager@nubison.io')"
+            :disabled="loading"
+            class="user-btn"
+          >
+            {{ loading ? "Setting up..." : "Login as Manager" }}
+            <small>manager@nubison.io</small>
           </button>
         </div>
 
@@ -119,6 +111,20 @@ async function setupSSO(email) {
   isError.value = false;
 
   try {
+    // 1. 먼저 Label Studio에서 기존 세션 로그아웃
+    message.value = "Clearing existing session...";
+    try {
+      await fetch("http://label.nubison.localhost:8080/user/logout/", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (logoutError) {
+      // 로그아웃 실패해도 계속 진행 (세션이 없을 수 있음)
+      console.log("Logout attempt:", logoutError.message);
+    }
+
+    // 2. Backend를 통해 SSO 토큰 설정
+    message.value = `Setting up SSO for ${email}...`;
     const response = await fetch(
       `http://nubison.localhost:3001/api/sso/setup?email=${encodeURIComponent(
         email

@@ -50,6 +50,7 @@ else:
 # 주의: rest_framework와 rest_framework.authtoken은 Label Studio에 이미 포함되어 있음
 INSTALLED_APPS += [
     'label_studio_sso',           # SSO 인증 앱
+    'custom_permissions',         # 커스텀 권한 관리 (Annotation 소유권)
 ]
 
 # 인증 백엔드 설정

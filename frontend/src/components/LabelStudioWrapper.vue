@@ -122,11 +122,21 @@ async function initialize() {
     const params = new URLSearchParams();
     params.set("hideHeader", "true");
 
+    // Add timestamp to force iframe reload (bust cache and old session)
+    params.set("_t", Date.now().toString());
+
     iframeUrl.value = `${LABEL_STUDIO_URL}/projects/${
       props.projectId
     }?${params.toString()}`;
 
     console.log("[Label Studio Wrapper] iframe URL:", iframeUrl.value);
+
+    // Force iframe reload if URL was already set (user switching)
+    const iframe = document.querySelector("iframe");
+    if (iframe && iframe.src) {
+      console.log("[Label Studio Wrapper] Forcing iframe reload for user switch");
+      iframe.src = iframeUrl.value;
+    }
 
     // Set timeout to detect load failures
     setTimeout(() => {

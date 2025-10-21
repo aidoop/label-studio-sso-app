@@ -50,6 +50,13 @@ urlpatterns = [
     ),
     re_path(r'^static/(?P<path>.*)$', serve, kwargs={'document_root': settings.STATIC_ROOT, 'show_indexes': True}),
 
+    # ==============================================================================
+    # Custom API Overrides
+    # ==============================================================================
+    # Annotation API 오버라이드 (ownership permission 추가)
+    # 중요: tasks.urls보다 먼저 등록하여 기본 URL을 오버라이드
+    path('api/annotations/', include('custom_api.urls')),
+
     # Label Studio 앱 URL 패턴
     re_path(r'^', include('organizations.urls')),
     re_path(r'^', include('projects.urls')),

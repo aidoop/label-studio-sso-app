@@ -83,7 +83,20 @@ app.get("/api/sso/setup", async (req, res) => {
       `[SSO Setup] Token received, expires in ${tokenData.expires_in}s`
     );
 
-    // 쿠키 설정 (모든 *.nubison.localhost 서브도메인 공유)
+    // 기존 Django 세션 쿠키 삭제 (새로운 사용자로 전환하기 위해)
+    // Django의 sessionid 쿠키가 남아있으면 이전 세션을 우선 사용하므로 삭제 필요
+    res.clearCookie("sessionid", {
+      domain: ".nubison.localhost",
+      path: "/",
+    });
+
+    // CSRF 쿠키도 삭제 (새 세션에 맞춰 재생성되도록)
+    res.clearCookie("csrftoken", {
+      domain: ".nubison.localhost",
+      path: "/",
+    });
+
+    // JWT 토큰 쿠키 설정 (모든 *.nubison.localhost 서브도메인 공유)
     res.cookie("ls_auth_token", tokenData.token, {
       domain: ".nubison.localhost", // 핵심: 모든 *.nubison.localhost 서브도메인에서 접근 가능
       path: "/",
@@ -92,7 +105,7 @@ app.get("/api/sso/setup", async (req, res) => {
       maxAge: tokenData.expires_in * 1000, // seconds to milliseconds
     });
 
-    console.log("[SSO Setup] Cookie set successfully");
+    console.log("[SSO Setup] Old session cleared, new JWT token set");
 
     res.json({
       success: true,

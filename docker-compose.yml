@@ -177,8 +177,14 @@ services:
       - ./config/label_studio.py:/label-studio/label_studio/core/settings/label_studio.py:ro
       - ./config/urls_simple.py:/label-studio/label_studio/core/urls.py:ro
 
-      # 커스텀 템플릿 (hideHeader 기능 개선)
+      # 커스텀 템플릿 (hideHeader 기능)
       - ./custom-templates/base.html:/label-studio/label_studio/templates/base.html:ro
+
+      # 커스텀 권한 관리 (Annotation 소유권)
+      - ./custom-permissions:/label-studio/label_studio/custom_permissions:ro
+
+      # 커스텀 API 오버라이드 (Annotation API)
+      - ./custom-api:/label-studio/label_studio/custom_api:ro
 
       # 초기화 스크립트 (사용자 생성 등)
       - ./scripts:/scripts:ro

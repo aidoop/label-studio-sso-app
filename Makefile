@@ -110,7 +110,7 @@ create-user: ## Django 관리자 계정 생성 (대화형)
 	@echo "$(GREEN)관리자 계정 생성$(RESET)"
 	docker-compose exec labelstudio python /label-studio/label_studio/manage.py createsuperuser
 
-init-users: ## 초기 사용자 자동 생성 (관리자 + 일반 사용자)
+setup: ## 초기 사용자 자동 생성 (관리자 + 일반 사용자)
 	@echo "$(GREEN)초기 사용자 생성 중...$(RESET)"
 	docker-compose exec labelstudio bash /scripts/init_users.sh
 
@@ -156,9 +156,34 @@ health: ## 헬스체크만 실행
 # 개발 환경
 # ==============================================================================
 
-setup: build start migrate create-user ## 초기 환경 설정 (빌드 + 시작 + 마이그레이션 + 계정 생성)
-	@echo "$(GREEN)초기 설정 완료!$(RESET)"
-	@echo "$(GREEN)http://localhost:8080 에서 접속하세요$(RESET)"
+setup-hosts: ## /etc/hosts 파일에 도메인 추가
+	@echo "$(GREEN)/etc/hosts 파일 설정 중...$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)다음 라인을 /etc/hosts 파일에 추가합니다:$(RESET)"
+	@echo "127.0.0.1 nubison.localhost"
+	@echo "127.0.0.1 label.nubison.localhost"
+	@echo ""
+	@read -p "계속하시겠습니까? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo "127.0.0.1 nubison.localhost" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "127.0.0.1 label.nubison.localhost" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "$(GREEN)완료!$(RESET)"; \
+	else \
+		echo "$(YELLOW)취소됨$(RESET)"; \
+	fi
+
+reset-db: ## 데이터베이스 초기화 (주의: 모든 데이터 삭제!)
+	@echo "$(YELLOW)경고: 모든 데이터베이스 데이터가 삭제됩니다!$(RESET)"
+	@read -p "계속하시겠습니까? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker-compose down -v; \
+		docker-compose up -d; \
+		echo "$(GREEN)데이터베이스 초기화 완료!$(RESET)"; \
+	else \
+		echo "$(YELLOW)취소됨$(RESET)"; \
+	fi
 
 env: ## .env 파일 생성 (템플릿에서 복사)
 	@if [ -f .env ]; then \

@@ -1,94 +1,41 @@
-# Label Studio SSO Integration Test App
+# Label Studio SSO Sample App
 
-Label Studio를 iframe으로 임베딩하여 사용하는 테스트 애플리케이션입니다. SSO 인증, 헤더 숨김, Annotation 소유권 제어 등의 기능을 제공합니다.
+> Label Studio 커스텀 이미지를 활용한 SSO 통합 샘플 애플리케이션
 
-## 📋 목차
+[![Docker](https://img.shields.io/badge/docker-compose-blue)](docker-compose.yml)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-- [아키텍처](#아키텍처)
-- [주요 기능](#주요-기능)
-- [빠른 시작](#빠른-시작)
-- [상세 가이드](#상세-가이드)
-- [커스터마이징](#커스터마이징)
-- [문제 해결](#문제-해결)
+## 이 프로젝트는 무엇인가?
 
-## 아키텍처
+이 프로젝트는 **Label Studio Custom Image**를 사용하는 완전한 샘플 애플리케이션입니다.
 
-### 서비스 구성
+### 구성 요소
 
 ```
 Docker Compose 환경:
-├── nubison.localhost:3000        → Frontend (Vue 3 + Vite)
-├── nubison.localhost:3001        → Backend (Express.js)
-└── label.nubison.localhost:8080  → Label Studio 1.20.0 + PostgreSQL 13.18
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/your-org/label-studio-custom:1.20.0-sso.1)
+├── Express.js Backend         → SSO 토큰 관리 (port 3001)
+├── Vue 3 Frontend             → 사용자 인터페이스 (port 3000)
+└── PostgreSQL 13.18           → 데이터베이스 (port 5432)
 ```
 
-### 서브도메인 쿠키 공유
+### 주요 기능 (Custom Image 제공)
 
-모든 서비스가 `*.nubison.localhost` 서브도메인을 사용하여 쿠키를 공유합니다:
+이 샘플 앱은 다음 기능을 가진 **label-studio-custom** 이미지를 사용합니다:
 
-```javascript
-// 쿠키 설정 예시
-domain: ".nubison.localhost"  // 모든 *.nubison.localhost에서 접근 가능
-```
+- ✅ **SSO 인증** (label-studio-sso v6.0.7)
+- ✅ **hideHeader 기능** - iframe에서 헤더 완전 제거
+- ✅ **Annotation 소유권 제어** - 자신의 annotation만 수정 가능
+- ✅ **사용자 전환** - 여러 사용자 계정 간 원활한 전환
 
-## 주요 기능
+**Custom Image 상세 정보**: [label-studio-custom](https://github.com/your-org/label-studio-custom)
 
-### 1. **SSO 인증 (Native JWT)**
-
-- **방식**: label-studio-sso v6.0.7 (Native JWT)
-- **인증 흐름**:
-  ```
-  Frontend → Backend → Label Studio API
-    ↓           ↓              ↓
-  사용자 선택  JWT 요청   JWT 토큰 발급
-                ↓
-            쿠키 설정 (ls_auth_token)
-                ↓
-            iframe 자동 로그인
-  ```
-- **지원 사용자**:
-  - `admin@hatiolab.com`
-  - `user1@nubison.localhost`
-  - `user2@nubison.localhost`
-  - `annotator@nubison.localhost`
-
-### 2. **hideHeader 기능**
-
-iframe에서 Label Studio 헤더를 완전히 숨기는 기능:
-
-- **URL 파라미터**: `?hideHeader=true`
-- **구현 방식**: JavaScript로 `--header-height` CSS 변수 강제 0px 설정
-- **효과**:
-  - 헤더 완전 제거
-  - 전체 화면 활용 (100vh)
-  - 깔끔한 UI
-
-### 3. **Annotation Ownership 제어**
-
-사용자가 자신의 annotation만 수정/삭제할 수 있도록 제한:
-
-- **보안 계층**:
-  - ✅ **백엔드 API 보안**: `IsAnnotationOwnerOrReadOnly` permission
-  - ✅ **완벽한 보안**: Postman, curl 등 직접 API 호출도 차단
-- **사용자 경험**:
-  - 자신의 annotation: 자유롭게 보기/수정/삭제
-  - 다른 사람의 annotation: 보기만 가능, 수정 시도 시 403 에러
-  - 관리자: 모든 annotation 수정 가능
-
-### 4. **사용자 전환**
-
-여러 사용자 계정 간 원활한 전환:
-
-- Django 세션 쿠키 자동 클리어
-- JWT 토큰 갱신
-- iframe 자동 reload
-
-## 빠른 시작
+## Quick Start
 
 ### 사전 요구사항
 
 - Docker Desktop 설치
-- 호스트 파일 설정 (자동 설정 스크립트 제공)
+- 호스트 파일 설정
 
 ### 1. 호스트 설정
 
@@ -113,37 +60,202 @@ sudo nano /etc/hosts
 # .env 파일 생성
 cp .env.example .env
 
-# .env 파일 편집
-# LABEL_STUDIO_API_TOKEN=<your-api-token>
+# .env 파일 편집 (필요시)
 ```
 
-**API 토큰 생성 방법**:
+### 3. Label Studio Custom Image 준비
+
+#### Option A: 로컬에서 빌드 (개발용)
 
 ```bash
-# Label Studio 컨테이너 실행 후
-make create-token
+# label-studio-custom 저장소 클론
+cd /Users/super/Documents/GitHub
+git clone https://github.com/your-org/label-studio-custom.git
+cd label-studio-custom
 
-# 생성된 토큰을 .env 파일에 복사
+# 이미지 빌드
+docker build -t label-studio-custom:local .
 ```
 
-### 3. Docker Compose 실행
+#### Option B: GitHub Container Registry에서 가져오기 (프로덕션)
 
 ```bash
+# docker-compose.yml 수정
+# image: label-studio-custom:local
+# → image: ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+
+# 이미지 pull
+docker pull ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+```
+
+### 4. Docker Compose 실행
+
+```bash
+cd /Users/super/Documents/GitHub/label-studio-test-app
+
 # 모든 서비스 시작
 docker compose up -d
 
 # 로그 확인
 docker compose logs -f
-
-# 상태 확인
-docker compose ps
 ```
 
-### 4. 접속
+### 5. 초기 사용자 생성
 
-브라우저에서 http://nubison.localhost:3000 접속
+```bash
+# 테스트 사용자 자동 생성
+make setup
+```
 
-## 상세 가이드
+**생성되는 계정**:
+
+| 이메일 | 비밀번호 | 역할 |
+|--------|----------|------|
+| `admin@hatiolab.com` | `admin123` | Admin |
+| `user1@nubison.localhost` | `user123` | User |
+| `user2@nubison.localhost` | `user123` | User |
+| `annotator@nubison.localhost` | `anno123` | Annotator |
+
+### 6. API 토큰 생성
+
+```bash
+# API 토큰 생성
+make create-token
+
+# 생성된 토큰을 .env 파일에 추가
+echo "LABEL_STUDIO_API_TOKEN=<your-token>" >> .env
+
+# Backend 재시작
+docker compose restart backend
+```
+
+### 7. 접속
+
+브라우저에서 다음 URL 접속:
+
+- **Frontend**: http://nubison.localhost:3000
+- **Label Studio**: http://label.nubison.localhost:8080
+
+## 아키텍처
+
+### 서비스 구성
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Docker Compose                          │
+│                                                              │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
+│  │  PostgreSQL  │   │   Backend    │   │  Frontend    │   │
+│  │   :5432      │   │  Express.js  │   │   Vue 3      │   │
+│  │              │◄──┤   :3001      │◄──┤   :3000      │   │
+│  └──────────────┘   └──────┬───────┘   └──────────────┘   │
+│         ▲                  │                                │
+│         │                  │                                │
+│         │                  ▼                                │
+│  ┌──────┴─────────────────────────────────────┐            │
+│  │     Label Studio Custom Image              │            │
+│  │     (label-studio-custom:local)            │            │
+│  │                                             │            │
+│  │  • SSO 인증 (Native JWT)                   │            │
+│  │  • hideHeader 기능                         │            │
+│  │  • Annotation 소유권 제어                  │            │
+│  │                                             │            │
+│  │     :8080 (label.nubison.localhost)       │            │
+│  └─────────────────────────────────────────────┘            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### SSO 인증 흐름
+
+```
+Frontend (Vue 3)
+    ↓
+    사용자 선택 (admin, user1, user2, annotator)
+    ↓
+Backend (Express.js)
+    ↓
+    POST /api/sso/jwt-native
+    - user_id를 Label Studio API로 전송
+    ↓
+Label Studio API
+    ↓
+    JWT 토큰 발급
+    ↓
+Backend
+    ↓
+    쿠키 설정 (ls_auth_token)
+    domain: .nubison.localhost
+    ↓
+Frontend
+    ↓
+    iframe 로드
+    src: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+    ↓
+Label Studio (자동 로그인)
+```
+
+## 주요 기능 테스트
+
+### 1. SSO 사용자 전환
+
+```
+1. http://nubison.localhost:3000 접속
+2. "admin@hatiolab.com" 선택 → Setup SSO
+3. Label Studio에서 annotation 생성
+4. 페이지 새로고침
+5. "user1@nubison.localhost" 선택 → Setup SSO
+6. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
+```
+
+### 2. hideHeader 기능
+
+Label Studio iframe에서 헤더가 숨겨진 것을 확인:
+
+```
+URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+```
+
+### 3. Annotation Ownership 제어
+
+```
+1. admin으로 annotation 생성
+2. user1으로 로그인
+3. admin이 만든 annotation 열기
+4. 수정 시도 → 403 에러 발생 (정상)
+5. user1 자신의 annotation 생성
+6. 수정/삭제 가능 (정상)
+```
+
+## 개발 가이드
+
+### 디렉토리 구조
+
+```
+label-studio-sso-app/
+├── docker-compose.yml           # 전체 스택 설정
+├── .env.example                 # 환경 변수 템플릿
+├── Makefile                     # 편의 명령어
+│
+├── backend/                     # Express.js SSO 백엔드
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── server.js
+│   └── ...
+│
+├── frontend/                    # Vue 3 프론트엔드
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── LabelStudioWrapper.vue
+│   │   └── ...
+│   └── ...
+│
+└── docs/                        # 문서
+    ├── QUICKSTART.md
+    └── TROUBLESHOOTING.md
+```
 
 ### Docker Compose 명령어
 
@@ -175,8 +287,6 @@ docker compose ps
 
 ### Makefile 명령어
 
-편의를 위한 Makefile 명령어:
-
 ```bash
 # 호스트 설정
 make setup-hosts
@@ -194,122 +304,47 @@ make logs
 make reset-db
 ```
 
-### 사용자 관리
+### 로컬 개발
 
-#### 초기 사용자 생성
+#### Frontend 개발
 
 ```bash
-make setup
+cd frontend
+npm install
+npm run dev
+
+# 브라우저에서 http://localhost:3000 접속
 ```
 
-다음 사용자가 자동으로 생성됩니다:
-
-| 이메일 | 비밀번호 | 역할 |
-|--------|----------|------|
-| `admin@hatiolab.com` | `admin123` | Admin |
-| `user1@nubison.localhost` | `user123` | User |
-| `user2@nubison.localhost` | `user123` | User |
-| `annotator@nubison.localhost` | `anno123` | Annotator |
-
-#### 수동 사용자 생성
+#### Backend 개발
 
 ```bash
-docker exec -it label-studio-app python manage.py createsuperuser
+cd backend
+npm install
+npm run dev
+
+# API: http://localhost:3001
 ```
 
 ## 커스터마이징
 
-### 디렉토리 구조
+### Label Studio Custom Image 수정
 
-```
-label-studio-test-app/
-├── docker-compose.yml           # Docker Compose 설정
-├── .env                         # 환경 변수
-├── Dockerfile                   # Label Studio 커스텀 이미지
-│
-├── config/                      # Label Studio 설정
-│   ├── label_studio.py         # Django settings (SSO 통합)
-│   └── urls_simple.py          # URL 라우팅
-│
-├── custom-templates/            # 커스텀 템플릿
-│   └── base.html               # hideHeader 기능
-│
-├── custom-permissions/          # Annotation 소유권 제어
-│   ├── __init__.py
-│   ├── apps.py
-│   ├── permissions.py          # IsAnnotationOwnerOrReadOnly
-│   └── mixins.py
-│
-├── custom-api/                  # API 오버라이드
-│   ├── __init__.py
-│   ├── urls.py
-│   └── annotations.py          # AnnotationAPI override
-│
-├── backend/                     # Express.js 백엔드
-│   ├── server.js               # SSO 토큰 관리
-│   └── Dockerfile
-│
-├── frontend/                    # Vue 3 프론트엔드
-│   ├── src/
-│   │   └── components/
-│   │       └── LabelStudioWrapper.vue
-│   └── Dockerfile
-│
-└── scripts/                     # 초기화 스크립트
-    └── setup.sh                # 사용자 생성
-```
+이 샘플 앱이 사용하는 Label Studio Custom Image를 수정하려면:
 
-### hideHeader 기능 커스터마이징
+1. [label-studio-custom](https://github.com/your-org/label-studio-custom) 저장소 클론
+2. 커스터마이징 수정 (config/, custom-permissions/, custom-api/, custom-templates/)
+3. 로컬에서 이미지 빌드:
+   ```bash
+   docker build -t label-studio-custom:local .
+   ```
+4. 샘플 앱에서 재시작:
+   ```bash
+   cd /Users/super/Documents/GitHub/label-studio-test-app
+   docker compose restart labelstudio
+   ```
 
-**파일**: `custom-templates/base.html`
-
-```javascript
-// hideHeader 감지
-function shouldHideHeader() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('hideHeader') === 'true';
-}
-
-// CSS 변수 강제 설정
-document.documentElement.style.setProperty('--header-height', '0px', 'important');
-```
-
-### Annotation Permission 커스터마이징
-
-**파일**: `custom-permissions/permissions.py`
-
-```python
-class IsAnnotationOwnerOrReadOnly(BasePermission):
-    """
-    사용자는 자신의 annotation만 수정/삭제할 수 있습니다.
-    """
-    def has_object_permission(self, request, view, obj):
-        # 읽기는 모두 허용
-        if request.method in SAFE_METHODS:
-            return True
-
-        # Admin은 모두 허용
-        if request.user.is_staff or request.user.is_superuser:
-            return True
-
-        # 소유자만 수정/삭제 허용
-        return obj.completed_by == request.user
-```
-
-### SSO 설정 커스터마이징
-
-**파일**: `config/label_studio.py`
-
-```python
-# JWT SSO 설정
-JWT_SSO_NATIVE_USER_ID_CLAIM = 'user_id'
-JWT_SSO_COOKIE_NAME = 'ls_auth_token'
-JWT_SSO_TOKEN_PARAM = 'token'
-SSO_TOKEN_EXPIRY = 600  # 10분
-
-# 사용자 자동 생성
-SSO_AUTO_CREATE_USERS = True
-```
+### Backend SSO 로직 수정
 
 **파일**: `backend/server.js`
 
@@ -321,6 +356,18 @@ const allowedUsers = [
   "user2@nubison.localhost",
   "annotator@nubison.localhost"
 ];
+```
+
+### Frontend UI 수정
+
+**파일**: `frontend/src/components/LabelStudioWrapper.vue`
+
+```javascript
+const iframeUrl = computed(() => {
+  const params = new URLSearchParams();
+  params.set("hideHeader", "true");
+  return `${LABEL_STUDIO_URL}/projects/${props.projectId}?${params.toString()}`;
+});
 ```
 
 ## 문제 해결
@@ -343,7 +390,7 @@ docker compose up -d
 
 ```bash
 # 1. API 토큰 확인
-echo $LABEL_STUDIO_API_TOKEN
+cat .env | grep API_TOKEN
 
 # 2. 토큰 재생성
 make create-token
@@ -355,89 +402,31 @@ docker compose restart backend
 docker compose logs -f backend
 ```
 
+### 이미지를 찾을 수 없음 (Image not found)
+
+```bash
+# Option A: 로컬에서 빌드
+cd /Users/super/Documents/GitHub/label-studio-custom
+docker build -t label-studio-custom:local .
+
+# Option B: docker-compose.yml에서 이미지 주소 확인
+# image: ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+```
+
 ### 헤더가 숨겨지지 않음
 
 ```bash
 # 1. 브라우저 캐시 클리어
 # Cmd + Shift + R (Mac) 또는 Ctrl + Shift + R (Windows)
 
-# 2. 컨테이너 재시작
-docker compose restart labelstudio
-
-# 3. URL에 hideHeader 파라미터 확인
+# 2. URL에 hideHeader 파라미터 확인
 # http://label.nubison.localhost:8080/projects/1?hideHeader=true
+
+# 3. Custom Image가 최신인지 확인
+docker images | grep label-studio-custom
 ```
 
-### Annotation 수정 권한 오류
-
-이것은 정상 동작입니다:
-- 다른 사용자의 annotation 수정 시도 → 403 Forbidden 에러
-- 해결: 자신의 annotation만 수정하거나, admin 계정 사용
-
-### 쿠키가 공유되지 않음
-
-```bash
-# 1. 서브도메인 확인
-# 모든 서비스가 *.nubison.localhost 사용하는지 확인
-
-# 2. 쿠키 도메인 확인
-# 브라우저 개발자 도구 → Application → Cookies → .nubison.localhost
-
-# 3. 환경 변수 확인
-docker compose exec labelstudio env | grep COOKIE
-```
-
-### PostgreSQL 연결 오류
-
-```bash
-# 1. PostgreSQL 상태 확인
-docker compose exec postgres pg_isready
-
-# 2. 연결 정보 확인
-docker compose exec labelstudio env | grep POSTGRES
-
-# 3. PostgreSQL 재시작
-docker compose restart postgres
-
-# 4. 로그 확인
-docker compose logs postgres
-```
-
-## 개발 환경
-
-### 프론트엔드 개발
-
-```bash
-# 로컬에서 개발 서버 실행 (HMR)
-cd frontend
-npm install
-npm run dev
-
-# Docker에서는 자동으로 HMR 지원
-```
-
-### 백엔드 개발
-
-```bash
-# 로컬에서 개발 서버 실행
-cd backend
-npm install
-npm run dev
-
-# Docker에서는 nodemon으로 자동 재시작
-```
-
-### Label Studio 커스터마이징
-
-```bash
-# 1. custom-templates/ 또는 custom-permissions/ 수정
-
-# 2. 컨테이너 재시작 (volume mount로 즉시 반영)
-docker compose restart labelstudio
-
-# 3. 변경사항 확인
-docker compose logs -f labelstudio
-```
+상세한 문제 해결은 [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)를 참고하세요.
 
 ## 프로덕션 배포
 
@@ -465,11 +454,21 @@ Nginx 또는 Traefik reverse proxy 사용 권장
 
 ## 참고 문서
 
-- [README-DOCKER.md](./README-DOCKER.md) - Docker 상세 가이드
+### 이 프로젝트
+
 - [QUICKSTART.md](./QUICKSTART.md) - 빠른 시작 가이드
-- [TEST_APP_GUIDE.md](./TEST_APP_GUIDE.md) - 상세 사용 가이드
+- [CHANGELOG.md](./CHANGELOG.md) - 변경 이력
+
+### Label Studio Custom Image
+
+- [label-studio-custom](https://github.com/your-org/label-studio-custom) - 커스텀 이미지 저장소
+- [Custom Image Documentation](https://github.com/your-org/label-studio-custom/blob/main/README.md)
+
+### Label Studio 공식
+
 - [Label Studio 공식 문서](https://labelstud.io/guide/)
 - [label-studio-sso v6.0.7](https://pypi.org/project/label-studio-sso/6.0.7/)
+- [Label Studio GitHub](https://github.com/HumanSignal/label-studio)
 
 ## 라이선스
 

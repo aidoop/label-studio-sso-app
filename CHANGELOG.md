@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-10-22
+
+### Changed
+
+#### 프로젝트 구조 재구성
+- Label Studio 커스텀 이미지 관련 파일을 별도 저장소([label-studio-custom](https://github.com/your-org/label-studio-custom))로 분리
+- 이 프로젝트는 이제 샘플 애플리케이션에만 집중
+- docker-compose.yml에서 커스텀 이미지를 외부 이미지로 사용 (`label-studio-custom:local` 또는 `ghcr.io/your-org/label-studio-custom:1.20.0-sso.1`)
+
+#### 제거된 파일 (→ label-studio-custom으로 이동)
+- `Dockerfile`
+- `config/`
+- `custom-permissions/`
+- `custom-api/`
+- `custom-templates/`
+- `scripts/`
+
+#### 문서 업데이트
+- README.md: 샘플 애플리케이션 중심으로 재작성
+- 커스텀 이미지 빌드 가이드 추가 (로컬 / Registry)
+
+### Added
+
+#### 새 문서
+- PROJECT_RESTRUCTURE_PROPOSAL.md: 프로젝트 재구성 제안서
+
+### Migration Guide
+
+#### From v1.0.0 to v1.1.0
+
+**1. label-studio-custom 이미지 빌드**
+
+```bash
+# label-studio-custom 저장소 클론
+cd /Users/super/Documents/GitHub
+git clone https://github.com/your-org/label-studio-custom.git
+cd label-studio-custom
+
+# 이미지 빌드
+docker build -t label-studio-custom:local .
+```
+
+**2. 샘플 앱 재시작**
+
+```bash
+cd /Users/super/Documents/GitHub/label-studio-test-app
+
+# 기존 컨테이너 중지 및 제거
+docker compose down -v
+
+# 새 구조로 재시작
+docker compose up -d
+```
+
 ## [1.0.0] - 2025-10-22
 
 ### Added

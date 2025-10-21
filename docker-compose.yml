@@ -72,13 +72,12 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 커스텀 이미지 빌드 (label-studio-sso 포함)
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # 퍼블리시된 커스텀 이미지 사용
+    # GitHub Container Registry에서 가져옴
+    # image: ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
 
-    # 또는 미리 빌드된 이미지 사용:
-    # image: your-registry/label-studio-sso:1.20.0
+    # 또는 로컬에서 빌드된 이미지 사용 (개발용):
+    image: label-studio-custom:local
 
     container_name: label-studio-app
 
@@ -171,23 +170,6 @@ services:
     volumes:
       # Label Studio 데이터 저장소 (프로젝트, 업로드 파일 등)
       - labelstudio_data:/label-studio/data
-
-      # 커스텀 설정 파일 주입
-      # config/ 디렉토리의 파일들을 컨테이너 내부로 마운트
-      - ./config/label_studio.py:/label-studio/label_studio/core/settings/label_studio.py:ro
-      - ./config/urls_simple.py:/label-studio/label_studio/core/urls.py:ro
-
-      # 커스텀 템플릿 (hideHeader 기능)
-      - ./custom-templates/base.html:/label-studio/label_studio/templates/base.html:ro
-
-      # 커스텀 권한 관리 (Annotation 소유권)
-      - ./custom-permissions:/label-studio/label_studio/custom_permissions:ro
-
-      # 커스텀 API 오버라이드 (Annotation API)
-      - ./custom-api:/label-studio/label_studio/custom_api:ro
-
-      # 초기화 스크립트 (사용자 생성 등)
-      - ./scripts:/scripts:ro
 
       # 로그 파일 저장 (선택사항)
       # - ./logs:/label-studio/logs

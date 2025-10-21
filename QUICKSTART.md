@@ -1,6 +1,6 @@
-# Label Studio + SSO 빠른 시작 가이드
+# Label Studio SSO 빠른 시작 가이드
 
-## 🚀 3단계로 시작하기
+## 🚀 5분 안에 시작하기
 
 ### 1단계: /etc/hosts 설정
 
@@ -13,108 +13,208 @@ sudo nano /etc/hosts
 127.0.0.1       label.nubison.localhost
 ```
 
-**Windows:** 관리자 권한 메모장으로 `C:\Windows\System32\drivers\etc\hosts` 편집
+**Windows**: 관리자 권한 메모장으로 `C:\Windows\System32\drivers\etc\hosts` 편집
 
----
-
-### 2단계: Docker Compose 실행
-
+**자동 설정** (macOS/Linux):
 ```bash
-cd /Users/super/Documents/GitHub/label-studio-test-app
-
-# 서비스 시작
-docker-compose up -d
-
-# 로그 확인 (선택사항)
-docker-compose logs -f
+make setup-hosts
 ```
 
 ---
 
-### 3단계: 초기 사용자 생성
-
-**방법 A: 자동 생성 (권장 - 관리자 + 일반 사용자 4명)**
+### 2단계: 환경 변수 설정
 
 ```bash
-# Makefile 사용
-make init-users
+# .env 파일 생성
+cp .env.example .env
 
-# 또는 직접 실행
-docker-compose exec labelstudio bash /scripts/init_users.sh
-```
-
-**생성되는 계정:**
-- `admin@nubison.localhost` / `admin123` (관리자)
-- `user1@nubison.localhost` / `user123` (일반 사용자)
-- `user2@nubison.localhost` / `user123` (일반 사용자)
-- `annotator@nubison.localhost` / `annotator123` (일반 사용자)
-
-**방법 B: 수동 생성 (관리자만)**
-
-```bash
-# Makefile 사용
-make create-user
-
-# 또는 직접 실행
-docker-compose exec labelstudio bash
-python /label-studio/label_studio/manage.py createsuperuser
-# Email: admin@nubison.localhost
-# Password: (원하는 비밀번호)
-exit
-```
-
-**접속:** http://label.nubison.localhost:8080
-
----
-
-## 📋 필수 환경변수 (.env)
-
-```bash
-# PostgreSQL
-POSTGRES_PASSWORD=dev_postgres_2024
-
-# Label Studio URL
-LABEL_STUDIO_HOST=http://label.nubison.localhost:8080
-
-# 서브도메인 쿠키 공유 (세션 공유)
+# 또는 최소 설정으로 시작
+cat > .env << EOF
+POSTGRES_PASSWORD=postgres
 SESSION_COOKIE_DOMAIN=.nubison.localhost
 CSRF_COOKIE_DOMAIN=.nubison.localhost
+EOF
 ```
 
 ---
 
-## 🍪 세션 공유 확인
+### 3단계: Docker Compose 실행
 
-브라우저 개발자 도구 (F12) → Application → Cookies
+```bash
+# 모든 서비스 시작
+docker compose up -d
 
-다음 쿠키의 **Domain**이 `.nubison.localhost`인지 확인:
-- `sessionid`
-- `csrftoken`
+# 로그 확인 (선택사항)
+docker compose logs -f
 
-✅ 이제 `http://nubison.localhost`와 `http://label.nubison.localhost:8080`에서 세션이 공유됩니다!
+# 상태 확인
+docker compose ps
+```
+
+**예상 출력**:
+```
+ Container label-studio-postgres  Running
+ Container label-studio-app       Running
+ Container label-studio-backend   Running
+ Container label-studio-frontend  Running
+```
+
+---
+
+### 4단계: 초기 설정
+
+#### 4-1. 사용자 생성
+
+```bash
+make setup
+```
+
+**생성되는 계정**:
+
+| 이메일 | 비밀번호 | 역할 |
+|--------|----------|------|
+| `admin@hatiolab.com` | `admin123` | Admin |
+| `user1@nubison.localhost` | `user123` | User |
+| `user2@nubison.localhost` | `user123` | User |
+| `annotator@nubison.localhost` | `anno123` | Annotator |
+
+#### 4-2. API 토큰 생성
+
+```bash
+make create-token
+```
+
+**출력 예시**:
+```
+Token for admin@hatiolab.com: 1a2b3c4d5e6f7g8h9i0j
+```
+
+**.env 파일에 토큰 추가**:
+```bash
+echo "LABEL_STUDIO_API_TOKEN=1a2b3c4d5e6f7g8h9i0j" >> .env
+```
+
+**Backend 재시작**:
+```bash
+docker compose restart backend
+```
+
+---
+
+### 5단계: 접속 및 테스트
+
+#### Label Studio 직접 접속
+```
+http://label.nubison.localhost:8080
+```
+- 위에서 생성한 계정으로 로그인
+- 프로젝트 생성 및 작업 추가
+
+#### 테스트 앱 접속
+```
+http://nubison.localhost:3000
+```
+- 사용자 선택 (admin, user1, user2, annotator)
+- "Setup SSO" 버튼 클릭
+- Label Studio iframe 자동 로드
+
+---
+
+## ✨ 주요 기능 테스트
+
+### 1. SSO 사용자 전환
+
+```
+1. http://nubison.localhost:3000 접속
+2. "admin@hatiolab.com" 선택 → Setup SSO
+3. Label Studio에서 annotation 생성
+4. 페이지 새로고침
+5. "user1@nubison.localhost" 선택 → Setup SSO
+6. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
+```
+
+### 2. hideHeader 기능
+
+Label Studio iframe에서 헤더가 숨겨진 것을 확인:
+```
+URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+```
+
+### 3. Annotation Ownership 제어
+
+```
+1. admin으로 annotation 생성
+2. user1으로 로그인
+3. admin이 만든 annotation 열기
+4. 수정 시도 → 403 에러 발생 (정상)
+5. user1 자신의 annotation 생성
+6. 수정/삭제 가능 (정상)
+```
 
 ---
 
 ## 🔧 자주 사용하는 명령어
 
+### Docker Compose
+
 ```bash
-# 시작
-docker-compose up -d
+# 서비스 시작
+docker compose up -d
 
-# 중지
-docker-compose stop
+# 특정 서비스만 시작
+docker compose up -d labelstudio
+docker compose up -d backend
 
-# 재시작
-docker-compose restart
+# 서비스 중지
+docker compose down
 
-# 로그
-docker-compose logs -f labelstudio
+# 서비스 재시작
+docker compose restart labelstudio
 
-# 컨테이너 접속
-docker-compose exec labelstudio bash
+# 로그 확인
+docker compose logs -f labelstudio
+docker compose logs --tail=100 backend
 
-# 완전 삭제 (데이터 포함)
-docker-compose down -v
+# 상태 확인
+docker compose ps
+
+# 완전 삭제 (볼륨 포함)
+docker compose down -v
+```
+
+### Makefile 명령어
+
+```bash
+# 호스트 설정
+make setup-hosts
+
+# 초기 사용자 생성
+make setup
+
+# API 토큰 생성
+make create-token
+
+# 로그 확인
+make logs
+
+# 데이터베이스 초기화
+make reset-db
+```
+
+### 컨테이너 접속
+
+```bash
+# Label Studio 컨테이너
+docker exec -it label-studio-app bash
+
+# PostgreSQL 컨테이너
+docker exec -it label-studio-postgres psql -U postgres -d labelstudio
+
+# Backend 컨테이너
+docker exec -it label-studio-backend sh
+
+# Frontend 컨테이너
+docker exec -it label-studio-frontend sh
 ```
 
 ---
@@ -122,23 +222,142 @@ docker-compose down -v
 ## 🆘 문제 해결
 
 ### 도메인 접속 안 됨
+
 ```bash
-# /etc/hosts 확인
+# 1. /etc/hosts 확인
 cat /etc/hosts | grep nubison
 
-# DNS 캐시 초기화 (macOS)
+# 2. 올바른 항목이 있는지 확인
+# 127.0.0.1 nubison.localhost
+# 127.0.0.1 label.nubison.localhost
+
+# 3. DNS 캐시 초기화
+# macOS
 sudo dscacheutil -flushcache
+sudo killall -HUP mDNSResponder
+
+# Linux
+sudo systemd-resolve --flush-caches
+
+# Windows
+ipconfig /flushdns
+```
+
+### 컨테이너가 시작되지 않음
+
+```bash
+# 1. 로그 확인
+docker compose logs labelstudio
+
+# 2. PostgreSQL 먼저 확인
+docker compose ps postgres
+docker compose exec postgres pg_isready
+
+# 3. 볼륨 초기화 후 재시작
+docker compose down -v
+docker compose up -d
+
+# 4. 포트 충돌 확인
+lsof -i :8080  # Label Studio
+lsof -i :3000  # Frontend
+lsof -i :3001  # Backend
+lsof -i :5432  # PostgreSQL
+```
+
+### SSO 로그인 실패
+
+```bash
+# 1. API 토큰 확인
+cat .env | grep API_TOKEN
+
+# 2. 토큰이 없으면 생성
+make create-token
+
+# 3. .env 파일에 추가
+echo "LABEL_STUDIO_API_TOKEN=your-token-here" >> .env
+
+# 4. Backend 재시작
+docker compose restart backend
+
+# 5. Backend 로그 확인
+docker compose logs -f backend
 ```
 
 ### 쿠키 공유 안 됨
-```bash
-# 환경변수 확인
-cat .env | grep COOKIE_DOMAIN
 
-# 서비스 재시작
-docker-compose restart labelstudio
+```bash
+# 1. 환경 변수 확인
+docker compose exec labelstudio env | grep COOKIE
+
+# 2. 올바른 값 확인
+# SESSION_COOKIE_DOMAIN=.nubison.localhost
+# CSRF_COOKIE_DOMAIN=.nubison.localhost
+
+# 3. 브라우저 개발자 도구에서 쿠키 확인
+# F12 → Application → Cookies → .nubison.localhost
+# ls_auth_token 쿠키가 있는지 확인
+
+# 4. 서비스 재시작
+docker compose restart labelstudio
+```
+
+### 헤더가 숨겨지지 않음
+
+```bash
+# 1. 브라우저 캐시 클리어
+# Cmd + Shift + R (Mac)
+# Ctrl + Shift + R (Windows/Linux)
+
+# 2. 컨테이너 재시작
+docker compose restart labelstudio
+
+# 3. URL 파라미터 확인
+# ?hideHeader=true 가 있는지 확인
+
+# 4. custom-templates/base.html 마운트 확인
+docker exec label-studio-app ls -la /label-studio/label_studio/templates/base.html
+```
+
+### Annotation 수정 불가 (403 에러)
+
+이것은 **정상 동작**입니다:
+```
+다른 사용자의 annotation 수정 시도 → 403 Forbidden
+
+해결 방법:
+1. 자신의 annotation만 수정
+2. 또는 admin 계정으로 로그인
 ```
 
 ---
 
-**상세 문서:** `README-DOCKER.md`, `HOSTS-SETUP.md`
+## 📊 서비스 URL 정리
+
+| 서비스 | URL | 용도 |
+|--------|-----|------|
+| Frontend | http://nubison.localhost:3000 | 테스트 앱 |
+| Backend | http://nubison.localhost:3001 | SSO API |
+| Label Studio | http://label.nubison.localhost:8080 | Label Studio |
+| PostgreSQL | localhost:5432 | 데이터베이스 |
+
+---
+
+## 🎯 다음 단계
+
+1. **프로젝트 생성**: Label Studio에서 프로젝트 생성
+2. **작업 추가**: 데이터 업로드 및 작업 생성
+3. **레이블링 설정**: Labeling interface 설정
+4. **테스트**: 여러 사용자로 로그인하여 annotation 생성
+
+---
+
+## 📚 상세 문서
+
+- [README.md](./README.md) - 프로젝트 전체 가이드
+- [README-DOCKER.md](./README-DOCKER.md) - Docker 상세 가이드
+- [TEST_APP_GUIDE.md](./TEST_APP_GUIDE.md) - 테스트 앱 상세 가이드
+- [CHANGELOG.md](./CHANGELOG.md) - 변경 이력
+
+---
+
+**도움이 필요하면**: Issues에 문의하세요!

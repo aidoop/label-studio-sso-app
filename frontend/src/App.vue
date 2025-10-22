@@ -85,7 +85,11 @@
         </div>
 
         <div class="wrapper-container">
-          <LabelStudioWrapper :project-id="selectedProject.id" :email="user" />
+          <LabelStudioWrapper
+            :key="user + '-' + selectedProject.id"
+            :project-id="selectedProject.id"
+            :email="user"
+          />
         </div>
       </div>
     </div>
@@ -111,22 +115,10 @@ async function setupSSO(email) {
   isError.value = false;
 
   try {
-    // 1. 먼저 Label Studio에서 기존 세션 로그아웃
-    message.value = "Clearing existing session...";
-    try {
-      await fetch("http://label.nubison.localhost:8080/user/logout/", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (logoutError) {
-      // 로그아웃 실패해도 계속 진행 (세션이 없을 수 있음)
-      console.log("Logout attempt:", logoutError.message);
-    }
-
-    // 2. Backend를 통해 SSO 토큰 설정
+    // Backend를 통해 JWT 토큰 발급
     message.value = `Setting up SSO for ${email}...`;
     const response = await fetch(
-      `http://nubison.localhost:3001/api/sso/setup?email=${encodeURIComponent(
+      `http://nubison.localhost:3001/api/sso/token?email=${encodeURIComponent(
         email
       )}`,
       {
@@ -185,6 +177,7 @@ function selectProject(project) {
 }
 
 function resetSSO() {
+
   ssoReady.value = false;
   message.value = "";
   user.value = "";

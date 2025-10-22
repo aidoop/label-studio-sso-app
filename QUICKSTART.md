@@ -73,10 +73,9 @@ make setup
 
 | 이메일 | 비밀번호 | 역할 |
 |--------|----------|------|
-| `admin@hatiolab.com` | `admin123` | Admin |
-| `user1@nubison.localhost` | `user123` | User |
-| `user2@nubison.localhost` | `user123` | User |
-| `annotator@nubison.localhost` | `anno123` | Annotator |
+| `admin@nubison.io` | `admin123!` | Admin |
+| `annotator@nubison.io` | `annotator123!` | Annotator |
+| `manager@nubison.io` | `manager123!` | Manager |
 
 #### 4-2. API 토큰 생성
 
@@ -86,7 +85,7 @@ make create-token
 
 **출력 예시**:
 ```
-Token for admin@hatiolab.com: 1a2b3c4d5e6f7g8h9i0j
+Token for admin@nubison.io: 1a2b3c4d5e6f7g8h9i0j
 ```
 
 **.env 파일에 토큰 추가**:
@@ -114,8 +113,8 @@ http://label.nubison.localhost:8080
 ```
 http://nubison.localhost:3000
 ```
-- 사용자 선택 (admin, user1, user2, annotator)
-- "Setup SSO" 버튼 클릭
+- 사용자 선택 (admin@nubison.io, annotator@nubison.io, manager@nubison.io)
+- "Login as Admin" (또는 다른 사용자) 버튼 클릭
 - Label Studio iframe 자동 로드
 
 ---
@@ -126,11 +125,23 @@ http://nubison.localhost:3000
 
 ```
 1. http://nubison.localhost:3000 접속
-2. "admin@hatiolab.com" 선택 → Setup SSO
+2. "Login as Admin" 버튼 클릭 (admin@nubison.io)
 3. Label Studio에서 annotation 생성
-4. 페이지 새로고침
-5. "user1@nubison.localhost" 선택 → Setup SSO
-6. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
+4. 브라우저 개발자 도구 → Application → Cookies 확인:
+   - ls_auth_token: 초기 로그인 시 생성됨
+   - sessionid: 첫 Label Studio 접근 후 생성됨
+   - ls_auth_token: sessionid 생성 후 자동 삭제됨
+5. "Logout" 버튼 클릭
+6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
+7. iframe이 재생성되고 새로운 사용자로 전환됨 확인
+8. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
+```
+
+**콘솔 로그 확인**:
+```
+[SSO Middleware] JWT token found in cookie 'ls_auth_token'
+[SSO Middleware] User auto-logged in via JWT: admin@nubison.io
+[SSO Middleware] JWT → Session: Deleted token cookie 'ls_auth_token'
 ```
 
 ### 2. hideHeader 기능
@@ -295,10 +306,31 @@ docker compose exec labelstudio env | grep COOKIE
 
 # 3. 브라우저 개발자 도구에서 쿠키 확인
 # F12 → Application → Cookies → .nubison.localhost
-# ls_auth_token 쿠키가 있는지 확인
+# 초기: ls_auth_token 쿠키 확인
+# 이후: sessionid 쿠키 확인 (ls_auth_token은 자동 삭제됨)
 
 # 4. 서비스 재시작
 docker compose restart labelstudio
+```
+
+### 사용자 전환이 안 됨
+
+```bash
+# 1. 브라우저 콘솔에서 에러 확인
+# F12 → Console
+
+# 2. iframe이 재생성되는지 확인
+# Vue DevTools 또는 Elements 탭에서 iframe의 key 속성 변경 확인
+
+# 3. 쿠키 확인
+# F12 → Application → Cookies
+# sessionid와 csrftoken이 삭제되고 새 ls_auth_token이 생성되는지 확인
+
+# 4. Backend 로그 확인
+docker compose logs -f backend
+
+# 5. Label Studio 로그 확인
+docker compose logs -f labelstudio | grep "SSO Middleware"
 ```
 
 ### 헤더가 숨겨지지 않음

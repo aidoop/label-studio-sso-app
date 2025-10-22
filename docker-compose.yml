@@ -73,7 +73,8 @@ services:
   # ==============================================================================
   labelstudio:
     # 퍼블리시된 커스텀 이미지 사용 (권장)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.1
+    # v1.20.0-sso.5: JWT → Session 전환 (JWT 인증 후 토큰 삭제로 성능 향상)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5
 
     # 또는 latest 태그 (개발용)
     # image: ghcr.io/aidoop/label-studio-custom:latest
@@ -141,6 +142,18 @@ services:
 
       # 사용자 자동 생성 여부 (true/false)
       SSO_AUTO_CREATE_USERS: ${SSO_AUTO_CREATE_USERS:-true}
+
+      # ----------------------------------------------------------------------
+      # Sentry 설정 (에러 추적)
+      # ----------------------------------------------------------------------
+
+      # Sentry DSN (비워두면 비활성화)
+      SENTRY_DSN: ""
+      FRONTEND_SENTRY_DSN: ""
+
+      # Sentry 환경 설정
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+      FRONTEND_SENTRY_ENVIRONMENT: ${FRONTEND_SENTRY_ENVIRONMENT:-development}
 
       # ----------------------------------------------------------------------
       # Label Studio 일반 설정

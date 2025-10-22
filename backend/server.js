@@ -24,20 +24,80 @@ app.use((req, res, next) => {
   next();
 });
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 /**
- * SSO Setup 엔드포인트
+ * Label Studio에서 JWT 토큰 발급
+ */
+async function issueJWT(email) {
+  const response = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to get SSO token: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * JWT 쿠키 설정
+ */
+function setJWTCookie(res, token, expiresIn) {
+  res.cookie("ls_auth_token", token, {
+    domain: ".nubison.localhost",
+    path: "/",
+    httpOnly: false, // 디버깅을 위해 false (프로덕션에서는 true 권장)
+    sameSite: "lax",
+    maxAge: expiresIn * 1000, // seconds to milliseconds
+  });
+}
+
+/**
+ * Django 세션 쿠키 삭제
+ */
+function clearSessionCookies(res) {
+  res.clearCookie("sessionid", {
+    domain: ".nubison.localhost",
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+  });
+  res.clearCookie("csrftoken", {
+    domain: ".nubison.localhost",
+    path: "/",
+    sameSite: "lax",
+  });
+}
+
+// ============================================================================
+// API Endpoints
+// ============================================================================
+
+/**
+ * SSO 토큰 발급 엔드포인트
  *
  * Label Studio에서 JWT 토큰을 발급받아 쿠키에 설정
- * Query parameter로 사용자 선택 가능
+ * - Frontend가 사용자 로그인 시 이 엔드포인트 호출
+ * - JWT → Django Session 전환: Label Studio 접근 시 자동으로 세션 생성
  */
-app.get("/api/sso/setup", async (req, res) => {
+app.get("/api/sso/token", async (req, res) => {
   try {
-    console.log("[SSO Setup] Starting SSO setup...");
+    console.log("[SSO Token] Issuing JWT token...");
 
     // Query parameter로 사용자 선택
     const userEmail = req.query.email || "admin@nubison.io";
 
-    // 허용된 사용자만 처리 (Label Studio에 생성된 모든 사용자)
+    // 허용된 사용자만 처리
     const allowedUsers = [
       "admin@nubison.io",
       "annotator@nubison.io",
@@ -50,88 +110,29 @@ app.get("/api/sso/setup", async (req, res) => {
       });
     }
 
-    console.log(`[SSO Setup] User: ${userEmail}`);
-
-    // 기존 세션 종료 (Label Studio logout)
-    console.log(`[SSO Setup] Logging out existing session...`);
-    try {
-      await fetch(`${LABEL_STUDIO_URL}/user/logout/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-      console.log(`[SSO Setup] Existing session logged out`);
-    } catch (error) {
-      console.log(`[SSO Setup] Logout attempt failed (maybe no active session): ${error.message}`);
-    }
+    console.log(`[SSO Token] User: ${userEmail}`);
 
     // Label Studio에서 JWT 토큰 발급
-    console.log(`[SSO Setup] Requesting token from Label Studio...`);
+    console.log(`[SSO Token] Requesting token from Label Studio...`);
+    const tokenData = await issueJWT(userEmail);
+    console.log(`[SSO Token] Token received, expires in ${tokenData.expires_in}s`);
 
-    const tokenResponse = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: userEmail,
-        // username: userEmail.split('@')[0], // optional
-        // first_name: 'Admin', // optional
-        // last_name: 'User' // optional
-      }),
-    });
+    // 기존 Django 세션 쿠키 삭제
+    clearSessionCookies(res);
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error("[SSO Setup] Label Studio error:", errorText);
-      throw new Error(
-        `Failed to get SSO token from Label Studio: ${tokenResponse.status}`
-      );
-    }
+    // JWT 토큰 쿠키 설정
+    setJWTCookie(res, tokenData.token, tokenData.expires_in);
 
-    const tokenData = await tokenResponse.json();
-    console.log(
-      `[SSO Setup] Token received, expires in ${tokenData.expires_in}s`
-    );
-
-    // 기존 Django 세션 쿠키 삭제 (새로운 사용자로 전환하기 위해)
-    // Django의 sessionid 쿠키가 남아있으면 이전 세션을 우선 사용하므로 삭제 필요
-    res.clearCookie("sessionid", {
-      domain: ".nubison.localhost",
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-    });
-
-    // CSRF 쿠키도 삭제 (새 세션에 맞춰 재생성되도록)
-    res.clearCookie("csrftoken", {
-      domain: ".nubison.localhost",
-      path: "/",
-      sameSite: "lax",
-    });
-
-    // JWT 토큰 쿠키 설정 (모든 *.nubison.localhost 서브도메인 공유)
-    res.cookie("ls_auth_token", tokenData.token, {
-      domain: ".nubison.localhost", // 핵심: 모든 *.nubison.localhost 서브도메인에서 접근 가능
-      path: "/",
-      httpOnly: false, // 디버깅을 위해 false로 설정 (프로덕션에서는 true 사용)
-      sameSite: "lax",
-      maxAge: tokenData.expires_in * 1000, // seconds to milliseconds
-    });
-
-    console.log("[SSO Setup] Old session cleared, new JWT token set");
+    console.log("[SSO Token] JWT token set successfully");
 
     res.json({
       success: true,
-      message: "SSO token setup complete",
+      message: "SSO token issued",
       user: userEmail,
       expiresIn: tokenData.expires_in,
     });
   } catch (error) {
-    console.error("[SSO Setup] Error:", error.message);
+    console.error("[SSO Token] Error:", error.message);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -202,13 +203,14 @@ app.get("/api/projects", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║  Label Studio Test Backend                                 ║
+║  Label Studio SSO Backend                                  ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Server:           http://localhost:${PORT}                ║
 ║  Label Studio:     ${LABEL_STUDIO_URL}                     ║
 ║                                                            ║
 ║  Endpoints:                                                ║
-║    GET  /api/sso/setup    - Setup SSO authentication       ║
+║    GET  /api/sso/token    - Issue JWT token (SSO setup)    ║
+║    GET  /api/projects     - Get project list               ║
 ║    GET  /api/health       - Health check                   ║
 ║    GET  /api/cookies      - View cookies (debug)           ║
 ╚════════════════════════════════════════════════════════════╝

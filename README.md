@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/your-org/label-studio-custom:1.20.0-sso.1)
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5)
 ├── Express.js Backend         → SSO 토큰 관리 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -23,12 +23,18 @@ Docker Compose 환경:
 
 이 샘플 앱은 다음 기능을 가진 **label-studio-custom** 이미지를 사용합니다:
 
-- ✅ **SSO 인증** (label-studio-sso v6.0.7)
+- ✅ **SSO 인증** (label-studio-sso v6.0.7 - 커스텀 빌드)
+  - Native JWT 기반 초기 인증
+  - JWT → Django Session 전환 (성능 최적화)
+  - JWT 토큰은 세션 생성 후 자동 삭제
+  - 사용자 전환 시 JWT가 기존 세션보다 우선순위 보장
 - ✅ **hideHeader 기능** - iframe에서 헤더 완전 제거
 - ✅ **Annotation 소유권 제어** - 자신의 annotation만 수정 가능
-- ✅ **사용자 전환** - 여러 사용자 계정 간 원활한 전환
+- ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
+- ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
 **Custom Image 상세 정보**: [label-studio-custom](https://github.com/your-org/label-studio-custom)
+**상세 변경사항**: [CUSTOMIZATION.md](customization/CUSTOMIZATION.md)
 
 ## Quick Start
 
@@ -82,10 +88,10 @@ docker build -t label-studio-custom:local .
 ```bash
 # docker-compose.yml 수정
 # image: label-studio-custom:local
-# → image: ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5
 
 # 이미지 pull
-docker pull ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5
 ```
 
 ### 4. Docker Compose 실행
@@ -111,10 +117,9 @@ make setup
 
 | 이메일 | 비밀번호 | 역할 |
 |--------|----------|------|
-| `admin@hatiolab.com` | `admin123` | Admin |
-| `user1@nubison.localhost` | `user123` | User |
-| `user2@nubison.localhost` | `user123` | User |
-| `annotator@nubison.localhost` | `anno123` | Annotator |
+| `admin@nubison.io` | `admin123!` | Admin |
+| `annotator@nubison.io` | `annotator123!` | Annotator |
+| `manager@nubison.io` | `manager123!` | Manager |
 
 ### 6. API 토큰 생성
 
@@ -170,29 +175,129 @@ docker compose restart backend
 ```
 Frontend (Vue 3)
     ↓
-    사용자 선택 (admin, user1, user2, annotator)
+    사용자 선택 (admin@nubison.io, annotator@nubison.io, manager@nubison.io)
     ↓
 Backend (Express.js)
     ↓
-    POST /api/sso/jwt-native
-    - user_id를 Label Studio API로 전송
+    GET /api/sso/token?email=admin@nubison.io
+    - Label Studio API로 JWT 토큰 요청
+    - 기존 세션 쿠키 삭제 (sessionid, csrftoken)
     ↓
 Label Studio API
     ↓
-    JWT 토큰 발급
+    POST /api/sso/token
+    JWT 토큰 발급 (유효기간: 10분)
     ↓
 Backend
     ↓
     쿠키 설정 (ls_auth_token)
     domain: .nubison.localhost
+    httpOnly: false (디버깅용)
     ↓
 Frontend
     ↓
     iframe 로드
     src: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+    key: email (사용자 변경 시 iframe 재생성)
     ↓
-Label Studio (자동 로그인)
+Label Studio Custom (label-studio-sso 미들웨어)
+    ↓
+    1. ls_auth_token 쿠키에서 JWT 검증
+    2. JWT 유효 → Django 세션 생성 (sessionid)
+    3. ls_auth_token 쿠키 삭제 (세션으로 전환)
+    ↓
+이후 요청들
+    ↓
+    Django Session만 사용 (빠른 인증, JWT 검증 불필요)
+    세션 만료 전까지 유지
 ```
+
+**인증 전환 메커니즘**:
+- **초기 인증**: JWT 토큰 (ls_auth_token) → Django Session (sessionid)
+- **사용자 전환**: 새 JWT 발급 → iframe 재생성 → 새 세션 생성
+- **성능 최적화**: JWT 검증은 최초 1회만, 이후 세션 사용
+
+### 핵심 구현 상세
+
+#### 1. label-studio-sso 커스텀 미들웨어
+
+**파일**: `label-studio-sso/label_studio_sso/middleware.py`
+
+**주요 변경사항**:
+```python
+# middleware.py - process_request()
+def process_request(self, request):
+    # JWT 토큰이 있으면 기존 세션을 무시하고 JWT로 인증
+    # (기존 if request.user.is_authenticated: return 로직 제거)
+
+    token = request.COOKIES.get(cookie_name)  # ls_auth_token
+    if token:
+        user = self.jwt_backend.authenticate(request, token=token)
+        if user:
+            login(request, user, backend=auth_backend)
+            request._jwt_authenticated = True  # 플래그 설정
+```
+
+```python
+# middleware.py - process_response()
+def process_response(self, request, response):
+    # JWT 인증 성공 후 세션 생성 → JWT 토큰 쿠키 삭제
+    if getattr(request, "_jwt_authenticated", False):
+        response.delete_cookie(
+            cookie_name,  # ls_auth_token
+            path="/",
+            domain=settings.SESSION_COOKIE_DOMAIN  # .nubison.localhost
+        )
+```
+
+**왜 이렇게 구현했나?**
+- 사용자 전환 시 기존 세션이 남아있어도 새 JWT가 우선순위를 가짐
+- JWT 검증 후 Django Session으로 전환하여 성능 향상
+- 불필요한 JWT 토큰 쿠키는 자동 삭제하여 보안 강화
+
+#### 2. Frontend iframe 재생성
+
+**파일**: `frontend/src/components/LabelStudioWrapper.vue`
+
+```vue
+<iframe
+  :key="props.email"  ← 사용자 변경 시 완전히 새로운 iframe 생성
+  :src="iframeUrl"
+  ...
+></iframe>
+```
+
+**왜 key를 사용하나?**
+- Vue의 key 변경 시 컴포넌트를 완전히 재생성
+- 사용자 전환 시 iframe 내부 상태 완전 초기화
+- 새 사용자의 JWT로 깨끗한 인증 시작
+
+#### 3. Backend 세션 쿠키 삭제
+
+**파일**: `backend/server.js`
+
+```javascript
+function clearSessionCookies(res) {
+  // 사용자 전환 시 기존 Label Studio 세션 쿠키 삭제
+  res.clearCookie('sessionid', {
+    domain: '.nubison.localhost',
+    path: '/'
+  });
+  res.clearCookie('csrftoken', {
+    domain: '.nubison.localhost',
+    path: '/'
+  });
+}
+```
+
+**인증 흐름 전체 정리**:
+1. 사용자 선택 → Backend가 기존 세션 쿠키 삭제
+2. Backend가 새 JWT 발급 → ls_auth_token 쿠키 설정
+3. Frontend iframe 재생성 (`:key="props.email"`)
+4. Label Studio 접근 → 미들웨어가 JWT 검증
+5. 인증 성공 → Django Session 생성 (sessionid)
+6. 미들웨어가 ls_auth_token 자동 삭제
+7. 이후 모든 요청은 sessionid만 사용 (빠름!)
 
 ## 주요 기능 테스트
 
@@ -200,11 +305,19 @@ Label Studio (자동 로그인)
 
 ```
 1. http://nubison.localhost:3000 접속
-2. "admin@hatiolab.com" 선택 → Setup SSO
-3. Label Studio에서 annotation 생성
-4. 페이지 새로고침
-5. "user1@nubison.localhost" 선택 → Setup SSO
-6. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
+2. "Login as Admin" 버튼 클릭 (admin@nubison.io)
+3. Label Studio에서 프로젝트 선택 및 annotation 생성
+4. 브라우저 개발자 도구 → Application → Cookies 확인:
+   - ls_auth_token: 초기 로그인 시 생성됨
+   - sessionid: 첫 Label Studio 접근 후 생성됨
+   - ls_auth_token: sessionid 생성 후 자동 삭제됨
+5. "Logout" 버튼 클릭
+6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
+7. iframe이 재생성되고 새로운 사용자로 전환됨 확인
+8. 브라우저 콘솔에서 SSO 인증 로그 확인:
+   [SSO Middleware] JWT token found in cookie 'ls_auth_token'
+   [SSO Middleware] User auto-logged in via JWT: annotator@nubison.io
+   [SSO Middleware] JWT → Session: Deleted token cookie 'ls_auth_token'
 ```
 
 ### 2. hideHeader 기능
@@ -351,24 +464,44 @@ npm run dev
 ```javascript
 // 허용된 사용자 목록
 const allowedUsers = [
-  "admin@hatiolab.com",
-  "user1@nubison.localhost",
-  "user2@nubison.localhost",
-  "annotator@nubison.localhost"
+  "admin@nubison.io",
+  "annotator@nubison.io",
+  "manager@nubison.io"
 ];
 ```
+
+**주요 엔드포인트**:
+- `GET /api/sso/token?email=<email>` - JWT 토큰 발급/갱신
+- `GET /api/projects` - 프로젝트 목록 조회
+- `GET /api/health` - 헬스체크
 
 ### Frontend UI 수정
 
 **파일**: `frontend/src/components/LabelStudioWrapper.vue`
 
-```javascript
-const iframeUrl = computed(() => {
-  const params = new URLSearchParams();
-  params.set("hideHeader", "true");
-  return `${LABEL_STUDIO_URL}/projects/${props.projectId}?${params.toString()}`;
-});
+```vue
+<!-- 사용자 전환 시 iframe 재생성 -->
+<iframe
+  :key="props.email"
+  :src="iframeUrl"
+  ...
+></iframe>
 ```
+
+```javascript
+// hideHeader 파라미터 추가
+const params = new URLSearchParams();
+params.set("hideHeader", "true");
+params.set("_t", Date.now().toString());
+
+iframeUrl.value = `${LABEL_STUDIO_URL}/projects/${
+  props.projectId
+}?${params.toString()}`;
+```
+
+**주요 구현**:
+- `:key="props.email"`: 사용자 변경 시 iframe 완전히 재생성
+- Django Session 사용으로 JWT 자동 갱신 로직 제거
 
 ## 문제 해결
 
@@ -456,6 +589,7 @@ Nginx 또는 Traefik reverse proxy 사용 권장
 
 ### 이 프로젝트
 
+- [customization/CUSTOMIZATION.md](customization/CUSTOMIZATION.md) - **상세 커스터마이징 문서**
 - [QUICKSTART.md](./QUICKSTART.md) - 빠른 시작 가이드
 - [CHANGELOG.md](./CHANGELOG.md) - 변경 이력
 

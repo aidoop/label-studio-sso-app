@@ -4,13 +4,17 @@
 # Label Studio SSO API 테스트 스크립트
 # ==============================================================================
 #
-# 이 스크립트는 Label Studio의 SSO API를 테스트합니다.
+# 이 스크립트는 Label Studio의 SSO API를 직접 테스트합니다.
+# (Backend API를 우회하고 Label Studio API에 직접 접근)
+#
+# 참고: 일반적인 사용에서는 Backend API (/api/sso/token)를 사용합니다.
+# 이 스크립트는 Label Studio의 네이티브 SSO API를 직접 테스트하는 용도입니다.
 #
 # 사용 방법:
 #   ./test-sso.sh <API_TOKEN> <USER_EMAIL>
 #
 # 예시:
-#   ./test-sso.sh abc123def456 user@example.com
+#   ./test-sso.sh abc123def456 admin@nubison.io
 #
 # ==============================================================================
 
@@ -26,9 +30,9 @@ NC='\033[0m' # No Color
 # 설정
 # ==============================================================================
 
-LABEL_STUDIO_URL="${LABEL_STUDIO_URL:-http://localhost:8080}"
+LABEL_STUDIO_URL="${LABEL_STUDIO_URL:-http://label.nubison.localhost:8080}"
 API_TOKEN="${1}"
-USER_EMAIL="${2:-test@example.com}"
+USER_EMAIL="${2:-admin@nubison.io}"
 
 # ==============================================================================
 # 헬퍼 함수
@@ -65,7 +69,10 @@ if [ -z "$API_TOKEN" ]; then
     echo "  $0 <API_TOKEN> [USER_EMAIL]"
     echo ""
     echo "API Token 생성 방법:"
-    echo "  docker-compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token <username>"
+    echo "  make create-token"
+    echo ""
+    echo "또는:"
+    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@nubison.io"
     echo ""
     exit 1
 fi
@@ -92,7 +99,7 @@ if curl -f -s "$LABEL_STUDIO_URL/health" > /dev/null; then
     print_success "Label Studio가 정상적으로 실행 중입니다"
 else
     print_error "Label Studio에 연결할 수 없습니다"
-    print_warning "서비스가 실행 중인지 확인하세요: docker-compose ps"
+    print_warning "서비스가 실행 중인지 확인하세요: docker compose ps"
     exit 1
 fi
 
@@ -192,16 +199,17 @@ elif [ "$HTTP_CODE" -eq 401 ]; then
     echo "  1. Label Studio에 로그인"
     echo "  2. Account Settings → Access Token 확인"
     echo "  또는"
-    echo "  docker-compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token <username>"
+    echo "  make create-token"
+    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@nubison.io"
     exit 1
 
 elif [ "$HTTP_CODE" -eq 404 ]; then
     print_error "HTTP 404 Not Found - SSO API 엔드포인트를 찾을 수 없습니다"
     echo ""
     echo "확인 사항:"
-    echo "  1. config/urls.py가 올바르게 마운트되었는지 확인"
-    echo "  2. docker-compose exec labelstudio cat /label-studio/label_studio/core/urls.py | grep sso"
-    echo "  3. docker-compose restart labelstudio"
+    echo "  1. Label Studio 커스텀 이미지가 올바르게 빌드되었는지 확인"
+    echo "  2. docker compose exec labelstudio cat /label-studio/label_studio/core/urls.py | grep sso"
+    echo "  3. docker compose restart labelstudio"
     exit 1
 
 else
@@ -217,6 +225,12 @@ print_section "테스트 완료"
 
 echo "다음 단계:"
 echo "  1. 위의 JWT 토큰을 사용하여 외부 앱에서 Label Studio 인증"
-echo "  2. 쿠키 방식 (권장) 또는 URL 파라미터 방식 사용"
-echo "  3. 자세한 사용 방법은 README-DOCKER.md 참조"
+echo "  2. 쿠키 방식 (권장): ls_auth_token 쿠키에 JWT 설정"
+echo "  3. 일반 사용: Backend API (http://nubison.localhost:3001/api/sso/token)를 통해 인증"
+echo "  4. JWT → Django Session 전환: Label Studio 접근 시 자동 세션 생성"
+echo ""
+echo "자세한 사용 방법:"
+echo "  - README.md - 전체 아키텍처 및 인증 흐름"
+echo "  - QUICKSTART.md - 빠른 시작 가이드"
+echo "  - customization/CUSTOMIZATION.md - 커스터마이징 상세"
 echo ""

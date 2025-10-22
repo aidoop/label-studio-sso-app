@@ -1,39 +1,16 @@
 <!--
- * Label Studio Wrapper Component for Test Application
- *
- * This component embeds Label Studio within the test app using an iframe.
- * It demonstrates SSO integration with Label Studio using JWT cookies.
- *
- * ## Key Features:
- * - SSO authentication via JWT cookie
- * - Hidden header for seamless integration
- * - Floating Action Buttons (FAB) for Reload and Fullscreen
- * - Loading and error states
- *
- * ## Architecture:
- * Browser → Test Backend API → Label Studio Backend
- *
- * ## Usage:
- * ```vue
- * <LabelStudioWrapper :project-id="5" />
- * ```
- *
- * The component automatically:
- * 1. Calls SSO setup endpoint to get JWT token
- * 2. Builds iframe URL with project ID
- * 3. Adds ?hideHeader=true to hide Label Studio's header
- * 4. Provides FAB buttons for reload and fullscreen
+  Label Studio Wrapper 컴포넌트
+
+  iframe을 통해 Label Studio를 임베드하고 JWT 쿠키 기반 SSO 인증을 처리합니다.
 -->
 
 <template>
   <div class="label-studio-wrapper">
-    <!-- Loading State -->
     <div v-if="loading" class="loading">
       <div class="spinner"></div>
       <span>Loading Label Studio...</span>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="error" class="error">
       <span class="error-icon">⚠️</span>
       <div>{{ error }}</div>
@@ -43,10 +20,10 @@
       </button>
     </div>
 
-    <!-- Main Content -->
     <div v-else class="container">
       <div class="iframe-container">
         <iframe
+          :key="props.email"
           :src="iframeUrl"
           @load="handleIframeLoad"
           @error="handleIframeError"
@@ -55,7 +32,6 @@
         ></iframe>
       </div>
 
-      <!-- Floating Action Buttons -->
       <div class="fab-container">
         <button class="fab-button" @click="handleReload" title="Reload">
           <span class="icon">🔄</span>
@@ -69,29 +45,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 
 interface Props {
   projectId: number;
-  email?: string;
+  email: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  email: "admin@hatiolab.com",
-});
+const props = defineProps<Props>();
 
 const loading = ref(true);
 const error = ref<string | null>(null);
 const iframeUrl = ref("");
 const iframeLoaded = ref(false);
-const iframeRef = ref<HTMLIFrameElement | null>(null);
 
 const BACKEND_URL = "http://nubison.localhost:3001";
 const LABEL_STUDIO_URL = "http://label.nubison.localhost:8080";
 
-/**
- * Initialize the component by setting up SSO and building iframe URL
- */
 async function initialize() {
   try {
     loading.value = true;
@@ -99,9 +69,8 @@ async function initialize() {
 
     console.log("[Label Studio Wrapper] Setting up SSO token...");
 
-    // Step 1: Setup SSO token before loading iframe
     const ssoResponse = await fetch(
-      `${BACKEND_URL}/api/sso/setup?email=${encodeURIComponent(props.email)}`,
+      `${BACKEND_URL}/api/sso/token?email=${encodeURIComponent(props.email)}`,
       {
         method: "GET",
         credentials: "include",
@@ -118,11 +87,8 @@ async function initialize() {
     const ssoData = await ssoResponse.json();
     console.log("[Label Studio Wrapper] SSO setup complete:", ssoData.message);
 
-    // Step 2: Build iframe URL
     const params = new URLSearchParams();
     params.set("hideHeader", "true");
-
-    // Add timestamp to force iframe reload (bust cache and old session)
     params.set("_t", Date.now().toString());
 
     iframeUrl.value = `${LABEL_STUDIO_URL}/projects/${
@@ -131,14 +97,6 @@ async function initialize() {
 
     console.log("[Label Studio Wrapper] iframe URL:", iframeUrl.value);
 
-    // Force iframe reload if URL was already set (user switching)
-    const iframe = document.querySelector("iframe");
-    if (iframe && iframe.src) {
-      console.log("[Label Studio Wrapper] Forcing iframe reload for user switch");
-      iframe.src = iframeUrl.value;
-    }
-
-    // Set timeout to detect load failures
     setTimeout(() => {
       if (!iframeLoaded.value && !error.value && !loading.value) {
         error.value =
@@ -150,24 +108,16 @@ async function initialize() {
     error.value = `Failed to initialize: ${err.message}`;
     loading.value = false;
   } finally {
-    // Force hide loading after initialization completes
-    // The iframe load event will be tracked separately
     loading.value = false;
   }
 }
 
-/**
- * Handle iframe load event
- */
 function handleIframeLoad() {
   console.log("[Label Studio Wrapper] iframe loaded successfully");
   iframeLoaded.value = true;
   loading.value = false;
 }
 
-/**
- * Handle iframe error event
- */
 function handleIframeError() {
   console.error("[Label Studio Wrapper] iframe failed to load");
   error.value =
@@ -175,9 +125,6 @@ function handleIframeError() {
   loading.value = false;
 }
 
-/**
- * Reload the iframe
- */
 function handleReload() {
   const iframe = document.querySelector("iframe");
   if (iframe && iframeUrl.value) {
@@ -185,9 +132,6 @@ function handleReload() {
   }
 }
 
-/**
- * Enter fullscreen mode
- */
 function handleFullscreen() {
   const iframe = document.querySelector("iframe");
   if (iframe && iframe.requestFullscreen) {
@@ -195,7 +139,6 @@ function handleFullscreen() {
   }
 }
 
-// Initialize on mount
 onMounted(() => {
   initialize();
 });

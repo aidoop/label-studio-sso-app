@@ -33,9 +33,6 @@ Docker Compose 환경:
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
-**Custom Image 상세 정보**: [label-studio-custom](https://github.com/your-org/label-studio-custom)
-**상세 변경사항**: [CUSTOMIZATION.md](customization/CUSTOMIZATION.md)
-
 ## Quick Start
 
 ### 사전 요구사항

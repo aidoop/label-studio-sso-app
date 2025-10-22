@@ -52,7 +52,7 @@ make setup-hosts
 ```bash
 sudo nano /etc/hosts
 
-# 다음 라인 추가:
+# 다음 라인 추가: (.localhost 로 끝나는 도메인이름인 경우는 꼭 추가하지 않아도 됨)
 127.0.0.1 nubison.localhost
 127.0.0.1 label.nubison.localhost
 ```

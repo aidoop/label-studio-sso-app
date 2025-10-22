@@ -556,8 +556,6 @@ docker build -t label-studio-custom:local .
 docker images | grep label-studio-custom
 ```
 
-상세한 문제 해결은 [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)를 참고하세요.
-
 ## 프로덕션 배포
 
 ### 환경 변수 변경

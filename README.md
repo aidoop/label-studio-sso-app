@@ -584,7 +584,6 @@ Nginx 또는 Traefik reverse proxy 사용 권장
 
 ### 이 프로젝트
 
-- [customization/CUSTOMIZATION.md](customization/CUSTOMIZATION.md) - **상세 커스터마이징 문서**
 - [QUICKSTART.md](./QUICKSTART.md) - 빠른 시작 가이드
 - [CHANGELOG.md](./CHANGELOG.md) - 변경 이력
 

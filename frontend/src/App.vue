@@ -48,8 +48,24 @@
         <button @click="resetSSO" class="secondary">Logout</button>
       </div>
 
-      <!-- 프로젝트 선택되지 않은 경우: 프로젝트 리스트 -->
-      <div v-if="!selectedProject" class="projects">
+      <!-- Tab Navigation -->
+      <div v-if="!selectedProject" class="tabs">
+        <button
+          :class="['tab-btn', { active: activeTab === 'projects' }]"
+          @click="activeTab = 'projects'"
+        >
+          📁 Projects
+        </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'webhooks' }]"
+          @click="activeTab = 'webhooks'"
+        >
+          🔔 Webhook Monitor
+        </button>
+      </div>
+
+      <!-- Projects Tab -->
+      <div v-if="!selectedProject && activeTab === 'projects'" class="projects">
         <h2>Projects</h2>
         <p v-if="loadingProjects" class="loading">Loading projects...</p>
         <p v-else-if="projects.length === 0" class="no-projects">
@@ -75,8 +91,13 @@
         </div>
       </div>
 
+      <!-- Webhook Monitor Tab -->
+      <div v-if="!selectedProject && activeTab === 'webhooks'" class="webhooks">
+        <WebhookMonitor />
+      </div>
+
       <!-- 프로젝트 선택된 경우: LabelStudioWrapper -->
-      <div v-else class="project-view">
+      <div v-if="selectedProject" class="project-view">
         <div class="project-header">
           <button @click="selectedProject = null" class="secondary back-btn">
             ← Back to Projects
@@ -99,6 +120,7 @@
 <script setup>
 import { ref } from "vue";
 import LabelStudioWrapper from "./components/LabelStudioWrapper.vue";
+import WebhookMonitor from "./components/WebhookMonitor.vue";
 
 const ssoReady = ref(false);
 const loading = ref(false);
@@ -108,6 +130,7 @@ const user = ref("");
 const projects = ref([]);
 const selectedProject = ref(null);
 const loadingProjects = ref(false);
+const activeTab = ref("projects"); // 'projects' or 'webhooks'
 
 async function setupSSO(email) {
   loading.value = true;
@@ -416,5 +439,48 @@ p:not(.error):not(.subtitle) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Navigation */
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 12px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin: 0;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #f8f9fa;
+  border-color: #667eea;
+  transform: none;
+  box-shadow: none;
+}
+
+.tab-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.webhooks {
+  margin-top: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

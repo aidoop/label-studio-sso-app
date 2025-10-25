@@ -14,8 +14,8 @@
 ```
 Docker Compose 환경:
 ├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5)
-├── Express.js Backend         → SSO 토큰 관리 (port 3001)
-├── Vue 3 Frontend             → 사용자 인터페이스 (port 3000)
+├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
+├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
 ```
 
@@ -30,6 +30,13 @@ Docker Compose 환경:
   - 사용자 전환 시 JWT가 기존 세션보다 우선순위 보장
 - ✅ **hideHeader 기능** - iframe에서 헤더 완전 제거
 - ✅ **Annotation 소유권 제어** - 자신의 annotation만 수정 가능
+- ✅ **Webhook Payload 커스터마이징** - annotation 이벤트에 사용자 정보 자동 추가
+  - `completed_by_info` 필드로 사용자 이메일, username, is_superuser 제공
+  - MLOps 시스템에서 별도 API 호출 없이 사용자 정보 확인
+- ✅ **실시간 Webhook Monitor** - annotation 이벤트 실시간 모니터링 대시보드
+  - Server-Sent Events (SSE)로 실시간 푸시
+  - Superuser vs 일반 사용자 필터링
+  - 이벤트 통계 및 히스토리
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
@@ -336,6 +343,139 @@ URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
 6. 수정/삭제 가능 (정상)
 ```
 
+### 4. Webhook Monitor (실시간 이벤트 모니터링)
+
+#### Webhook 등록
+
+먼저 Label Studio에서 webhook을 등록합니다:
+
+```bash
+# API 토큰 확인
+cat .env | grep LABEL_STUDIO_API_TOKEN
+
+# Webhook 등록 (curl 사용)
+curl -X POST http://label.nubison.localhost:8080/api/webhooks \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "http://backend:3001/api/webhooks/annotation",
+    "organization": 1,
+    "project": 1,
+    "active": true,
+    "send_payload": true,
+    "actions": [
+      "ANNOTATION_CREATED",
+      "ANNOTATION_UPDATED",
+      "ANNOTATIONS_DELETED"
+    ]
+  }'
+```
+
+**주의사항**:
+- `send_payload: true`로 설정해야 `completed_by_info` 필드가 포함됩니다
+- `url`은 Docker 네트워크 내부 주소를 사용 (`backend:3001`)
+- 프로젝트마다 별도로 webhook을 등록해야 합니다
+
+#### Webhook Monitor 사용
+
+1. **접속**: http://nubison.localhost:3000에 로그인 후 "🔔 Webhook Monitor" 탭 클릭
+
+2. **실시간 모니터링**:
+   - SSE (Server-Sent Events)로 실시간 이벤트 자동 표시
+   - 연결 상태: 우측 상단 "Connected" 표시 확인
+
+3. **Annotation 생성 테스트**:
+   ```
+   1. "📁 Projects" 탭에서 프로젝트 선택
+   2. Label Studio에서 annotation 생성/수정/삭제
+   3. "🔔 Webhook Monitor" 탭으로 전환
+   4. 실시간으로 이벤트가 표시되는 것을 확인
+   ```
+
+4. **이벤트 필터링**:
+   - **All Events**: 모든 이벤트 표시
+   - **Regular Users**: 일반 사용자 이벤트만 표시
+   - **Superuser Only**: Admin 이벤트만 표시
+
+5. **이벤트 정보 확인**:
+   ```json
+   {
+     "action": "ANNOTATION_CREATED",
+     "annotation": {
+       "id": 17,
+       "completed_by_info": {
+         "id": 1,
+         "email": "annotator@nubison.io",
+         "username": "annotator1",
+         "is_superuser": false
+       }
+     }
+   }
+   ```
+
+6. **Superuser 필터링 시연**:
+   ```
+   1. Admin으로 로그인하여 annotation 생성
+      → "⚠️ SKIPPED: Admin annotation" 표시
+
+   2. Annotator로 로그인하여 annotation 생성
+      → "✅ PROCESSED: Regular user annotation" 표시
+   ```
+
+#### Backend 로그 확인
+
+```bash
+# Webhook 수신 로그 확인
+docker compose logs -f backend
+
+# 예상 출력:
+============================================================
+[Webhook] Received annotation event
+============================================================
+Action: ANNOTATION_CREATED
+User Info:
+  - Email: annotator@nubison.io
+  - Username: annotator1
+  - Is Superuser: false
+  ✅ PROCESSED: Regular user annotation
+Annotation ID: 17
+Task ID: 19
+============================================================
+```
+
+#### Webhook Endpoints
+
+샘플 앱의 Backend에서 제공하는 Webhook 관련 엔드포인트:
+
+- `POST /api/webhooks/annotation` - Label Studio에서 호출 (Webhook 수신)
+- `GET /api/webhooks/events` - 이벤트 목록 조회
+- `GET /api/webhooks/stream` - SSE 실시간 스트림
+- `GET /api/webhooks/stats` - Webhook 통계
+
+#### MLOps 시나리오 시뮬레이션
+
+이 Webhook Monitor는 다음과 같은 MLOps 시나리오를 시뮬레이션합니다:
+
+```javascript
+// backend/server.js의 Webhook Handler 예시
+if (userInfo.is_superuser) {
+  console.log("⚠️  SKIPPED: Admin user annotation");
+  // Admin annotation은 모델 성능 계산에서 제외
+} else {
+  console.log("✅ PROCESSED: Regular user annotation");
+  // 일반 사용자 annotation만 사용하여 모델 성능 계산
+  // calculateModelPerformance(payload);
+}
+```
+
+**실무 활용 예시**:
+1. Annotator가 annotation 생성 → Webhook 발생
+2. MLOps 시스템이 annotation 수신
+3. `completed_by_info.is_superuser === false` 확인
+4. AI 모델 예측 결과와 비교하여 성능 계산
+5. 백엔드에 성능 지표 전송
+6. 성능 저하 시 알림 메일 발송
+
 ## 개발 가이드
 
 ### 디렉토리 구조
@@ -357,8 +497,10 @@ label-studio-sso-app/
 │   ├── package.json
 │   ├── vite.config.js
 │   ├── src/
+│   │   ├── App.vue             # 메인 앱 (탭 네비게이션)
 │   │   ├── components/
-│   │   │   └── LabelStudioWrapper.vue
+│   │   │   ├── LabelStudioWrapper.vue  # Label Studio iframe
+│   │   │   └── WebhookMonitor.vue      # Webhook 실시간 모니터
 │   │   └── ...
 │   └── ...
 │
@@ -470,6 +612,9 @@ const allowedUsers = [
 **주요 엔드포인트**:
 - `GET /api/sso/token?email=<email>` - JWT 토큰 발급/갱신
 - `GET /api/projects` - 프로젝트 목록 조회
+- `POST /api/webhooks/annotation` - Webhook 이벤트 수신
+- `GET /api/webhooks/events` - Webhook 이벤트 목록 조회
+- `GET /api/webhooks/stream` - SSE 실시간 스트림
 - `GET /api/health` - 헬스체크
 
 ### Frontend UI 수정

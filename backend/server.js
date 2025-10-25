@@ -25,6 +25,85 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
+// Webhook Event Store
+// ============================================================================
+
+// In-memory store for webhook events (최근 100개)
+const webhookEvents = [];
+const MAX_EVENTS = 100;
+
+// SSE 클라이언트 목록
+const sseClients = [];
+
+/**
+ * Webhook 이벤트 저장 및 브로드캐스트
+ */
+function addWebhookEvent(event) {
+  // 타임스탬프 추가
+  const eventWithTimestamp = {
+    ...event,
+    receivedAt: new Date().toISOString(),
+    id: Date.now(),
+  };
+
+  // 이벤트 저장 (최대 100개 유지)
+  webhookEvents.unshift(eventWithTimestamp);
+  if (webhookEvents.length > MAX_EVENTS) {
+    webhookEvents.pop();
+  }
+
+  // SSE 클라이언트들에게 브로드캐스트
+  broadcastToSSEClients(eventWithTimestamp);
+
+  return eventWithTimestamp;
+}
+
+/**
+ * SSE 클라이언트들에게 이벤트 브로드캐스트
+ */
+function broadcastToSSEClients(event) {
+  const data = JSON.stringify(event);
+  sseClients.forEach((client) => {
+    client.write(`data: ${data}\n\n`);
+  });
+  console.log(`[Webhook] Broadcasted to ${sseClients.length} SSE clients`);
+}
+
+/**
+ * Webhook 통계 계산
+ */
+function getWebhookStats() {
+  const stats = {
+    total: webhookEvents.length,
+    byAction: {},
+    bySuperuser: { superuser: 0, regular: 0 },
+    byUser: {},
+  };
+
+  webhookEvents.forEach((event) => {
+    // Action별 카운트
+    const action = event.action || "UNKNOWN";
+    stats.byAction[action] = (stats.byAction[action] || 0) + 1;
+
+    // Superuser 여부
+    const userInfo = event.annotation?.completed_by_info;
+    if (userInfo) {
+      if (userInfo.is_superuser) {
+        stats.bySuperuser.superuser++;
+      } else {
+        stats.bySuperuser.regular++;
+      }
+
+      // 사용자별 카운트
+      const email = userInfo.email || "unknown";
+      stats.byUser[email] = (stats.byUser[email] || 0) + 1;
+    }
+  });
+
+  return stats;
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -200,20 +279,183 @@ app.get("/api/projects", async (req, res) => {
   }
 });
 
+// ============================================================================
+// Webhook Endpoints
+// ============================================================================
+
+/**
+ * Webhook 이벤트 수신
+ *
+ * Label Studio에서 전송하는 annotation 이벤트를 수신합니다.
+ * completed_by_info 필드를 파싱하여 사용자 정보를 확인할 수 있습니다.
+ */
+app.post("/api/webhooks/annotation", (req, res) => {
+  try {
+    const payload = req.body;
+    console.log("\n" + "=".repeat(60));
+    console.log("[Webhook] Received annotation event");
+    console.log("=".repeat(60));
+    console.log(`Action: ${payload.action}`);
+
+    // completed_by_info 파싱
+    const userInfo = payload.annotation?.completed_by_info;
+    if (userInfo) {
+      console.log("User Info:");
+      console.log(`  - Email: ${userInfo.email}`);
+      console.log(`  - Username: ${userInfo.username}`);
+      console.log(`  - Is Superuser: ${userInfo.is_superuser}`);
+
+      // Superuser만 처리 (MLOps 시나리오)
+      if (userInfo.is_superuser) {
+        console.log("  ✅ PROCESSED: Superuser annotation (used for model performance)");
+      } else {
+        console.log("  ⚠️  SKIPPED: Regular user annotation (not used for model performance)");
+      }
+    } else {
+      console.log("⚠️  Warning: completed_by_info not found in payload");
+      console.log(`   completed_by ID: ${payload.annotation?.completed_by}`);
+    }
+
+    // Annotation 정보
+    if (payload.annotation) {
+      console.log(`Annotation ID: ${payload.annotation.id}`);
+      console.log(`Task ID: ${payload.annotation.task}`);
+    }
+
+    console.log("=".repeat(60) + "\n");
+
+    // 이벤트 저장 및 브로드캐스트
+    const storedEvent = addWebhookEvent(payload);
+
+    // 응답
+    res.json({
+      success: true,
+      message: "Webhook received",
+      eventId: storedEvent.id,
+    });
+  } catch (error) {
+    console.error("[Webhook] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Webhook 이벤트 조회
+ *
+ * 저장된 webhook 이벤트 목록을 반환합니다.
+ */
+app.get("/api/webhooks/events", (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const filter = req.query.filter; // 'all', 'superuser', 'regular'
+
+    let filteredEvents = webhookEvents;
+
+    // 필터 적용
+    if (filter === "superuser") {
+      filteredEvents = webhookEvents.filter(
+        (event) => event.annotation?.completed_by_info?.is_superuser === true
+      );
+    } else if (filter === "regular") {
+      filteredEvents = webhookEvents.filter(
+        (event) => event.annotation?.completed_by_info?.is_superuser === false
+      );
+    }
+
+    // 제한 적용
+    const limitedEvents = filteredEvents.slice(0, limit);
+
+    res.json({
+      success: true,
+      events: limitedEvents,
+      total: filteredEvents.length,
+      stats: getWebhookStats(),
+    });
+  } catch (error) {
+    console.error("[Webhook Events] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Webhook 이벤트 실시간 스트림 (Server-Sent Events)
+ *
+ * 실시간으로 webhook 이벤트를 푸시합니다.
+ */
+app.get("/api/webhooks/stream", (req, res) => {
+  // SSE 헤더 설정
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "http://nubison.localhost:3000");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  // 클라이언트 등록
+  sseClients.push(res);
+  console.log(`[SSE] Client connected. Total clients: ${sseClients.length}`);
+
+  // 초기 연결 메시지
+  res.write(`data: ${JSON.stringify({ type: "connected", message: "SSE connected" })}\n\n`);
+
+  // 클라이언트 연결 종료 처리
+  req.on("close", () => {
+    const index = sseClients.indexOf(res);
+    if (index !== -1) {
+      sseClients.splice(index, 1);
+    }
+    console.log(`[SSE] Client disconnected. Total clients: ${sseClients.length}`);
+  });
+});
+
+/**
+ * Webhook 이벤트 통계
+ */
+app.get("/api/webhooks/stats", (req, res) => {
+  try {
+    const stats = getWebhookStats();
+    res.json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("[Webhook Stats] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`
-╔════════════════════════════════════════════════════════════╗
-║  Label Studio SSO Backend                                  ║
-╠════════════════════════════════════════════════════════════╣
-║  Server:           http://localhost:${PORT}                ║
-║  Label Studio:     ${LABEL_STUDIO_URL}                     ║
-║                                                            ║
-║  Endpoints:                                                ║
-║    GET  /api/sso/token    - Issue JWT token (SSO setup)    ║
-║    GET  /api/projects     - Get project list               ║
-║    GET  /api/health       - Health check                   ║
-║    GET  /api/cookies      - View cookies (debug)           ║
-╚════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════╗
+║  Label Studio SSO Backend                                      ║
+╠════════════════════════════════════════════════════════════════╣
+║  Server:           http://localhost:${PORT}                    ║
+║  Label Studio:     ${LABEL_STUDIO_URL}                         ║
+║                                                                ║
+║  SSO Endpoints:                                                ║
+║    GET  /api/sso/token           - Issue JWT token             ║
+║                                                                ║
+║  Project Endpoints:                                            ║
+║    GET  /api/projects            - Get project list            ║
+║                                                                ║
+║  Webhook Endpoints:                                            ║
+║    POST /api/webhooks/annotation - Receive webhook events      ║
+║    GET  /api/webhooks/events     - Get webhook event list      ║
+║    GET  /api/webhooks/stream     - Real-time SSE stream        ║
+║    GET  /api/webhooks/stats      - Webhook statistics          ║
+║                                                                ║
+║  Utility Endpoints:                                            ║
+║    GET  /api/health              - Health check                ║
+║    GET  /api/cookies             - View cookies (debug)        ║
+╚════════════════════════════════════════════════════════════════╝
   `);
 });
 

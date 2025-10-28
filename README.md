@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5)
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -37,6 +37,12 @@ Docker Compose 환경:
   - Server-Sent Events (SSE)로 실시간 푸시
   - Superuser vs 일반 사용자 필터링
   - 이벤트 통계 및 히스토리
+- ✅ **Custom Export API (MLOps 통합)** - 필터링된 Task Export API
+  - Label Studio 오리지널 Serializer 사용 (표준 호환)
+  - 날짜 범위, 모델 버전, 승인자 필터링
+  - 선택적 페이징 지원
+  - N+1 쿼리 최적화
+  - 엔드포인트: `POST /api/custom/export/`
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
@@ -92,10 +98,12 @@ docker build -t label-studio-custom:local .
 ```bash
 # docker-compose.yml 수정
 # image: label-studio-custom:local
-# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5
+# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11
 
 # 이미지 pull
-docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.5
+docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11
+# 또는 latest 태그 사용
+docker pull ghcr.io/aidoop/label-studio-custom:latest
 ```
 
 ### 4. Docker Compose 실행

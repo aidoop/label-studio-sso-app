@@ -475,8 +475,8 @@ docker compose up -d
 1. **Label Studio Custom Image 배포**
    ```bash
    cd /Users/super/Documents/GitHub/label-studio-custom
-   docker tag label-studio-custom:latest your-registry/label-studio-custom:1.20.0-sso.6
-   docker push your-registry/label-studio-custom:1.20.0-sso.6
+   docker tag label-studio-custom:latest your-registry/label-studio-custom:1.20.0-sso.11
+   docker push your-registry/label-studio-custom:1.20.0-sso.11
    ```
 
 2. **환경 변수 설정**

@@ -62,6 +62,12 @@
         >
           🔔 Webhook Monitor
         </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'api-test' }]"
+          @click="activeTab = 'api-test'"
+        >
+          🧪 API Test
+        </button>
       </div>
 
       <!-- Projects Tab -->
@@ -96,6 +102,11 @@
         <WebhookMonitor />
       </div>
 
+      <!-- API Test Tab -->
+      <div v-if="!selectedProject && activeTab === 'api-test'" class="api-test">
+        <ProjectAPITest />
+      </div>
+
       <!-- 프로젝트 선택된 경우: LabelStudioWrapper -->
       <div v-if="selectedProject" class="project-view">
         <div class="project-header">
@@ -121,6 +132,7 @@
 import { ref } from "vue";
 import LabelStudioWrapper from "./components/LabelStudioWrapper.vue";
 import WebhookMonitor from "./components/WebhookMonitor.vue";
+import ProjectAPITest from "./components/ProjectAPITest.vue";
 
 const ssoReady = ref(false);
 const loading = ref(false);

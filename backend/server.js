@@ -280,6 +280,87 @@ app.get("/api/projects", async (req, res) => {
 });
 
 // ============================================================================
+// Label Studio API Proxy (for testing custom features)
+// ============================================================================
+
+/**
+ * Label Studio Projects API 프록시 (GET)
+ * 프론트엔드에서 프로젝트 목록 조회
+ */
+app.get("/api/labelstudio/projects", async (req, res) => {
+  try {
+    console.log("[Label Studio Proxy] GET /api/projects/");
+
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/projects/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("[Label Studio Proxy] Error:", data);
+      return res.status(response.status).json(data);
+    }
+
+    console.log(`[Label Studio Proxy] Success: ${data.results?.length || 0} projects`);
+    res.json(data);
+  } catch (error) {
+    console.error("[Label Studio Proxy] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Label Studio Project 수정 API 프록시 (PATCH)
+ * model_version 필드 업데이트 테스트용
+ */
+app.patch("/api/labelstudio/projects/:projectId", async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const body = req.body;
+
+    console.log(`[Label Studio Proxy] PATCH /api/projects/${projectId}/`);
+    console.log(`[Label Studio Proxy] Body:`, body);
+
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/projects/${projectId}/`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`[Label Studio Proxy] Error (${response.status}):`, data);
+      return res.status(response.status).json(data);
+    }
+
+    console.log(`[Label Studio Proxy] Success: Project ${projectId} updated`);
+    if (body.model_version) {
+      console.log(`[Label Studio Proxy] ✅ model_version updated: ${body.model_version}`);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error("[Label Studio Proxy] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// ============================================================================
 // Webhook Endpoints
 // ============================================================================
 

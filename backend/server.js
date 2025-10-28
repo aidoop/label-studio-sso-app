@@ -360,6 +360,48 @@ app.patch("/api/labelstudio/projects/:projectId", async (req, res) => {
   }
 });
 
+/**
+ * Label Studio Custom Export API 프록시 (POST)
+ * MLOps 통합을 위한 필터링된 Task Export
+ */
+app.post("/api/labelstudio/custom/export", async (req, res) => {
+  try {
+    const body = req.body;
+
+    console.log(`[Label Studio Proxy] POST /api/custom/export/`);
+    console.log(`[Label Studio Proxy] Request:`, body);
+
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/export/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`[Label Studio Proxy] Error (${response.status}):`, data);
+      return res.status(response.status).json(data);
+    }
+
+    console.log(`[Label Studio Proxy] Success: Exported ${data.total} tasks`);
+    if (data.page) {
+      console.log(`[Label Studio Proxy] Page ${data.page}/${data.total_pages}`);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error("[Label Studio Proxy] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 // ============================================================================
 // Webhook Endpoints
 // ============================================================================

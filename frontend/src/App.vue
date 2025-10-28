@@ -68,6 +68,12 @@
         >
           🧪 API Test
         </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'export-api' }]"
+          @click="activeTab = 'export-api'"
+        >
+          📊 Export API
+        </button>
       </div>
 
       <!-- Projects Tab -->
@@ -107,6 +113,11 @@
         <ProjectAPITest />
       </div>
 
+      <!-- Export API Test Tab -->
+      <div v-if="!selectedProject && activeTab === 'export-api'" class="export-api">
+        <ExportAPITest />
+      </div>
+
       <!-- 프로젝트 선택된 경우: LabelStudioWrapper -->
       <div v-if="selectedProject" class="project-view">
         <div class="project-header">
@@ -133,6 +144,7 @@ import { ref } from "vue";
 import LabelStudioWrapper from "./components/LabelStudioWrapper.vue";
 import WebhookMonitor from "./components/WebhookMonitor.vue";
 import ProjectAPITest from "./components/ProjectAPITest.vue";
+import ExportAPITest from "./components/ExportAPITest.vue";
 
 const ssoReady = ref(false);
 const loading = ref(false);

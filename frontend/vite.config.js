@@ -6,5 +6,11 @@ export default defineConfig({
   server: {
     host: "nubison.localhost",
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://nubison.localhost:3001',
+        changeOrigin: true,
+      },
+    },
   },
 });

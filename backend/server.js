@@ -9,6 +9,10 @@ const PORT = 3001;
 const LABEL_STUDIO_URL = process.env.LABEL_STUDIO_URL || "http://label.nubison.localhost:8080";
 const LABEL_STUDIO_API_TOKEN = process.env.LABEL_STUDIO_API_TOKEN || "YOUR_API_TOKEN_HERE"; // Label Studio의 API Token
 
+// 환경변수 로드 확인 (디버깅용)
+console.log(`[Config] LABEL_STUDIO_URL: ${LABEL_STUDIO_URL}`);
+console.log(`[Config] LABEL_STUDIO_API_TOKEN: ${LABEL_STUDIO_API_TOKEN ? LABEL_STUDIO_API_TOKEN.substring(0, 10) + '...' : 'NOT SET'}`);
+
 app.use(
   cors({
     origin: "http://nubison.localhost:3000",
@@ -380,7 +384,28 @@ app.post("/api/labelstudio/custom/export", async (req, res) => {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    console.log(`[Label Studio Proxy] Response status: ${response.status}`);
+    console.log(`[Label Studio Proxy] Response headers:`, {
+      'content-type': response.headers.get('content-type'),
+      'content-length': response.headers.get('content-length')
+    });
+
+    // Check if response has content
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error(`Invalid content-type: ${contentType}`);
+    }
+
+    const text = await response.text();
+    console.log(`[Label Studio Proxy] Response body: ${text}`);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error(`[Label Studio Proxy] JSON parse error:`, parseError.message);
+      throw new Error(`Failed to parse JSON response: ${text.substring(0, 100)}`);
+    }
 
     if (!response.ok) {
       console.error(`[Label Studio Proxy] Error (${response.status}):`, data);
@@ -395,6 +420,7 @@ app.post("/api/labelstudio/custom/export", async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error("[Label Studio Proxy] Error:", error.message);
+    console.error("[Label Studio Proxy] Error stack:", error.stack);
     res.status(500).json({
       success: false,
       message: error.message,

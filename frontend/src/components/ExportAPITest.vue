@@ -262,7 +262,28 @@ export default {
           body: JSON.stringify(body),
         });
 
-        const data = await res.json();
+        console.log('[Export API] Response status:', res.status);
+        console.log('[Export API] Response headers:', {
+          'content-type': res.headers.get('content-type'),
+          'content-length': res.headers.get('content-length')
+        });
+
+        // Check if response has content
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error(`Invalid content-type: ${contentType}`);
+        }
+
+        const text = await res.text();
+        console.log('[Export API] Response body:', text);
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          console.error('[Export API] JSON parse error:', parseError);
+          throw new Error(`Failed to parse JSON: ${text.substring(0, 100)}`);
+        }
 
         response.value = {
           success: res.ok,
@@ -283,6 +304,7 @@ export default {
           history.value = history.value.slice(0, 10);
         }
       } catch (error) {
+        console.error('[Export API] Error:', error);
         response.value = {
           success: false,
           status: 'Network Error',

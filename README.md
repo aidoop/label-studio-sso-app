@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11)
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.12)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -39,10 +39,16 @@ Docker Compose 환경:
   - 이벤트 통계 및 히스토리
 - ✅ **Custom Export API (MLOps 통합)** - 필터링된 Task Export API
   - Label Studio 오리지널 Serializer 사용 (표준 호환)
-  - 날짜 범위, 모델 버전, 승인자 필터링
+  - 날짜 범위, 모델 버전, 승인자 필터링 ⭐ **v1.20.0-sso.12: 타임존 처리 개선**
+  - ISO 8601 타임존 지원 (`2025-01-15T10:30:45+09:00`)
+  - PostgreSQL `timestamptz` 사용으로 정확한 타임존 비교
   - 선택적 페이징 지원
   - N+1 쿼리 최적화
   - 엔드포인트: `POST /api/custom/export/`
+- ✅ **정적 파일 수집** ⭐ **v1.20.0-sso.12: collectstatic 추가**
+  - 빌드 시 정적 파일(JavaScript, CSS) 자동 수집
+  - `sw.js` 파일 404 오류 해결
+  - 웹 인터페이스 정상 작동 보장
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
@@ -732,6 +738,48 @@ labelstudio.yourdomain.com → Label Studio
 ### HTTPS 설정
 
 Nginx 또는 Traefik reverse proxy 사용 권장
+
+## 업그레이드 가이드
+
+### v1.20.0-sso.11 → v1.20.0-sso.12
+
+**주요 변경사항:**
+- ✅ Static Files Collection 추가 (`sw.js` 파일 404 오류 해결)
+- ✅ Custom Export API 날짜 필터 타임존 처리 개선
+- ✅ 프로젝트 구조 개선 (scripts/ 디렉토리 통합)
+
+**업그레이드 방법:**
+
+```bash
+# 1. docker-compose.yml 확인
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.12
+
+# 2. 컨테이너 중지 및 이미지 업데이트
+docker compose down
+docker compose pull labelstudio
+
+# 3. 컨테이너 재시작
+docker compose up -d
+
+# 4. 로그 확인
+docker compose logs -f labelstudio
+
+# 5. 동작 확인
+# - 웹 인터페이스 접속 확인
+# - Custom Export API 날짜 필터 테스트
+curl -X POST http://localhost:8080/api/custom/export/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": 1,
+    "search_from": "2025-01-15T10:00:00+09:00",
+    "search_to": "2025-01-20T18:00:00+09:00"
+  }'
+```
+
+**주의사항:**
+- 데이터베이스 백업 권장
+- 다운타임 없이 업그레이드 가능 (데이터베이스 스키마 변경 없음)
 
 ## 참고 문서
 

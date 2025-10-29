@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.9 - iframe 임베딩 X-Frame-Options 설정 포함)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11
+    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.12 - collectstatic 및 타임존 처리 개선)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.12
 
     # 또는 latest 태그 (개발용 - 최신 릴리즈)
     # image: ghcr.io/aidoop/label-studio-custom:latest

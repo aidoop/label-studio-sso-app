@@ -33,9 +33,6 @@
       </div>
 
       <div class="fab-container">
-        <button class="fab-button" @click="handleReload" title="Reload">
-          <span class="icon">🔄</span>
-        </button>
         <button class="fab-button" @click="handleFullscreen" title="Fullscreen">
           <span class="icon">⛶</span>
         </button>

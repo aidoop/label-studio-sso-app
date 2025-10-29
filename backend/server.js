@@ -149,13 +149,13 @@ function setJWTCookie(res, token, expiresIn) {
  * Django 세션 쿠키 삭제
  */
 function clearSessionCookies(res) {
-  res.clearCookie("sessionid", {
+  res.clearCookie("ls_sessionid", {
     domain: ".nubison.localhost",
     path: "/",
     httpOnly: true,
     sameSite: "lax",
   });
-  res.clearCookie("csrftoken", {
+  res.clearCookie("ls_csrftoken", {
     domain: ".nubison.localhost",
     path: "/",
     sameSite: "lax",

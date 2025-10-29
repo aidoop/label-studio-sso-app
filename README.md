@@ -199,7 +199,7 @@ Backend (Express.js)
     ↓
     GET /api/sso/token?email=admin@nubison.io
     - Label Studio API로 JWT 토큰 요청
-    - 기존 세션 쿠키 삭제 (sessionid, csrftoken)
+    - 기존 세션 쿠키 삭제 (ls_sessionid, ls_csrftoken)
     ↓
 Label Studio API
     ↓
@@ -221,7 +221,7 @@ Frontend
 Label Studio Custom (label-studio-sso 미들웨어)
     ↓
     1. ls_auth_token 쿠키에서 JWT 검증
-    2. JWT 유효 → Django 세션 생성 (sessionid)
+    2. JWT 유효 → Django 세션 생성 (ls_sessionid)
     3. ls_auth_token 쿠키 삭제 (세션으로 전환)
     ↓
 이후 요청들
@@ -231,7 +231,7 @@ Label Studio Custom (label-studio-sso 미들웨어)
 ```
 
 **인증 전환 메커니즘**:
-- **초기 인증**: JWT 토큰 (ls_auth_token) → Django Session (sessionid)
+- **초기 인증**: JWT 토큰 (ls_auth_token) → Django Session (ls_sessionid)
 - **사용자 전환**: 새 JWT 발급 → iframe 재생성 → 새 세션 생성
 - **성능 최적화**: JWT 검증은 최초 1회만, 이후 세션 사용
 
@@ -297,11 +297,11 @@ def process_response(self, request, response):
 ```javascript
 function clearSessionCookies(res) {
   // 사용자 전환 시 기존 Label Studio 세션 쿠키 삭제
-  res.clearCookie('sessionid', {
+  res.clearCookie('ls_sessionid', {
     domain: '.nubison.localhost',
     path: '/'
   });
-  res.clearCookie('csrftoken', {
+  res.clearCookie('ls_csrftoken', {
     domain: '.nubison.localhost',
     path: '/'
   });
@@ -313,9 +313,9 @@ function clearSessionCookies(res) {
 2. Backend가 새 JWT 발급 → ls_auth_token 쿠키 설정
 3. Frontend iframe 재생성 (`:key="props.email"`)
 4. Label Studio 접근 → 미들웨어가 JWT 검증
-5. 인증 성공 → Django Session 생성 (sessionid)
+5. 인증 성공 → Django Session 생성 (ls_sessionid)
 6. 미들웨어가 ls_auth_token 자동 삭제
-7. 이후 모든 요청은 sessionid만 사용 (빠름!)
+7. 이후 모든 요청은 ls_sessionid만 사용 (빠름!)
 
 ## 주요 기능 테스트
 
@@ -327,8 +327,8 @@ function clearSessionCookies(res) {
 3. Label Studio에서 프로젝트 선택 및 annotation 생성
 4. 브라우저 개발자 도구 → Application → Cookies 확인:
    - ls_auth_token: 초기 로그인 시 생성됨
-   - sessionid: 첫 Label Studio 접근 후 생성됨
-   - ls_auth_token: sessionid 생성 후 자동 삭제됨
+   - ls_sessionid: 첫 Label Studio 접근 후 생성됨
+   - ls_auth_token: ls_sessionid 생성 후 자동 삭제됨
 5. "Logout" 버튼 클릭
 6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
 7. iframe이 재생성되고 새로운 사용자로 전환됨 확인

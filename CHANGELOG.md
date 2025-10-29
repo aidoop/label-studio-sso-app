@@ -88,7 +88,7 @@ docker compose up -d
 
 #### SSO 사용자 전환 개선
 - Django 세션 쿠키 자동 클리어 기능 추가
-- `sessionid` 및 `csrftoken` 쿠키 삭제
+- `ls_sessionid` 및 `ls_csrftoken` 쿠키 삭제
 - iframe URL에 타임스탬프 추가하여 강제 reload
 - 파일:
   - `backend/server.js` (lines 86-107)

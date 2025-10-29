@@ -129,8 +129,8 @@ http://nubison.localhost:3000
 3. Label Studio에서 annotation 생성
 4. 브라우저 개발자 도구 → Application → Cookies 확인:
    - ls_auth_token: 초기 로그인 시 생성됨
-   - sessionid: 첫 Label Studio 접근 후 생성됨
-   - ls_auth_token: sessionid 생성 후 자동 삭제됨
+   - ls_sessionid: 첫 Label Studio 접근 후 생성됨
+   - ls_auth_token: ls_sessionid 생성 후 자동 삭제됨
 5. "Logout" 버튼 클릭
 6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
 7. iframe이 재생성되고 새로운 사용자로 전환됨 확인
@@ -307,7 +307,7 @@ docker compose exec labelstudio env | grep COOKIE
 # 3. 브라우저 개발자 도구에서 쿠키 확인
 # F12 → Application → Cookies → .nubison.localhost
 # 초기: ls_auth_token 쿠키 확인
-# 이후: sessionid 쿠키 확인 (ls_auth_token은 자동 삭제됨)
+# 이후: ls_sessionid 쿠키 확인 (ls_auth_token은 자동 삭제됨)
 
 # 4. 서비스 재시작
 docker compose restart labelstudio
@@ -324,7 +324,7 @@ docker compose restart labelstudio
 
 # 3. 쿠키 확인
 # F12 → Application → Cookies
-# sessionid와 csrftoken이 삭제되고 새 ls_auth_token이 생성되는지 확인
+# ls_sessionid와 ls_csrftoken이 삭제되고 새 ls_auth_token이 생성되는지 확인
 
 # 4. Backend 로그 확인
 docker compose logs -f backend

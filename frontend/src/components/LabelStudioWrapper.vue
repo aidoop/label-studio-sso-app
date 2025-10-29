@@ -67,8 +67,6 @@ async function initialize() {
     loading.value = true;
     error.value = null;
 
-    console.log("[Label Studio Wrapper] Setting up SSO token...");
-
     const ssoResponse = await fetch(
       `${BACKEND_URL}/api/sso/token?email=${encodeURIComponent(props.email)}`,
       {
@@ -85,7 +83,6 @@ async function initialize() {
     }
 
     const ssoData = await ssoResponse.json();
-    console.log("[Label Studio Wrapper] SSO setup complete:", ssoData.message);
 
     const params = new URLSearchParams();
     params.set("hideHeader", "true");
@@ -95,8 +92,6 @@ async function initialize() {
       props.projectId
     }?${params.toString()}`;
 
-    console.log("[Label Studio Wrapper] iframe URL:", iframeUrl.value);
-
     setTimeout(() => {
       if (!iframeLoaded.value && !error.value && !loading.value) {
         error.value =
@@ -104,7 +99,6 @@ async function initialize() {
       }
     }, 15000);
   } catch (err: any) {
-    console.error("[Label Studio Wrapper] Initialization failed:", err);
     error.value = `Failed to initialize: ${err.message}`;
     loading.value = false;
   } finally {
@@ -113,13 +107,11 @@ async function initialize() {
 }
 
 function handleIframeLoad() {
-  console.log("[Label Studio Wrapper] iframe loaded successfully");
   iframeLoaded.value = true;
   loading.value = false;
 }
 
 function handleIframeError() {
-  console.error("[Label Studio Wrapper] iframe failed to load");
   error.value =
     "Failed to load Label Studio iframe. Please check the server connection.";
   loading.value = false;

@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.12)
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.14)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -741,6 +741,55 @@ Nginx 또는 Traefik reverse proxy 사용 권장
 
 ## 업그레이드 가이드
 
+### v1.20.0-sso.13 → v1.20.0-sso.14
+
+**주요 변경사항:**
+- ✅ sw.js 파일 라우팅 경로 수정
+- ✅ Service Worker 500 Internal Server Error 해결
+- ✅ URL 패턴에서 정확한 정적 파일 경로 사용 (`static_build/js/sw.js`)
+
+**업그레이드 방법:**
+
+```bash
+# 1. docker-compose.yml에서 이미지 버전 확인
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.14
+
+# 2. 컨테이너 업데이트
+docker compose down
+docker compose pull labelstudio
+docker compose up -d
+
+# 3. 동작 확인
+# Service Worker 파일 정상 로드 확인
+curl -I http://localhost:8080/sw.js
+# HTTP 200 OK 응답 확인
+```
+
+### v1.20.0-sso.12 → v1.20.0-sso.13
+
+**주요 변경사항:**
+- ✅ 쿠키 이름 충돌 방지: `ls_sessionid`, `ls_csrftoken`
+- ✅ 같은 도메인에서 여러 Django 앱 실행 시 충돌 방지
+- ✅ label-studio-sso v6.0.7 패키지 업데이트
+- ✅ SESSION_COOKIE_NAME, CSRF_COOKIE_NAME 설정 추가
+
+**업그레이드 방법:**
+
+```bash
+# 1. docker-compose.yml에서 이미지 버전 확인
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.13
+
+# 2. 기존 세션 쿠키 자동 정리됨 (사용자 재로그인 필요)
+# 3. 컨테이너 업데이트
+docker compose down
+docker compose pull labelstudio
+docker compose up -d
+
+# 4. 동작 확인
+# - 브라우저 개발자 도구 → Application → Cookies
+# - 새로운 쿠키 이름 확인: ls_sessionid, ls_csrftoken
+```
+
 ### v1.20.0-sso.11 → v1.20.0-sso.12
 
 **주요 변경사항:**
@@ -752,7 +801,7 @@ Nginx 또는 Traefik reverse proxy 사용 권장
 
 ```bash
 # 1. docker-compose.yml 확인
-# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.12
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.13
 
 # 2. 컨테이너 중지 및 이미지 업데이트
 docker compose down

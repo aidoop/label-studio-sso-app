@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.14)
+├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -104,10 +104,10 @@ docker build -t label-studio-custom:local .
 ```bash
 # docker-compose.yml 수정
 # image: label-studio-custom:local
-# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11
+# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18
 
 # 이미지 pull
-docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.11
+docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18
 # 또는 latest 태그 사용
 docker pull ghcr.io/aidoop/label-studio-custom:latest
 ```

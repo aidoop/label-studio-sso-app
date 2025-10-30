@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.17 - font preload 제거)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.17
+    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.18 - PostgreSQL 환경변수 유연화)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18
 
     # 또는 latest 태그 (개발용 - 최신 릴리즈)
     # image: ghcr.io/aidoop/label-studio-custom:latest

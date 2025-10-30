@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-10-30
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.17 → v1.20.0-sso.18
+- **변경 내용**: PostgreSQL 환경변수명 유연화
+  - `POSTGRE_*` 환경변수를 우선적으로 사용
+  - 기존 `POSTGRES_*` 환경변수도 폴백으로 지원 (하위 호환성 유지)
+- **영향**: docker-compose.yml의 이미지 태그 업데이트
+- **참조**: [label-studio-custom v1.20.0-sso.18 CHANGELOG](https://github.com/your-org/label-studio-custom/blob/main/CHANGELOG.md#1200-sso18---2025-10-30)
+
 ## [1.1.0] - 2025-10-22
 
 ### Changed

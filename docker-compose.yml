@@ -171,6 +171,21 @@ services:
       CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
 
       # ----------------------------------------------------------------------
+      # iframe 임베딩 보안 헤더 설정 (v1.20.0-sso.19+)
+      # ----------------------------------------------------------------------
+
+      # CSP frame-ancestors 설정 (간편 모드, 권장)
+      # 예: "'self' https://console.nubison.io"
+      CSP_FRAME_ANCESTORS: ${CSP_FRAME_ANCESTORS:-}
+
+      # 전체 CSP 정책 설정 (고급 모드)
+      CONTENT_SECURITY_POLICY: ${CONTENT_SECURITY_POLICY:-}
+
+      # X-Frame-Options 설정 (구형 브라우저용)
+      # 옵션: DENY, SAMEORIGIN
+      X_FRAME_OPTIONS: ${X_FRAME_OPTIONS:-}
+
+      # ----------------------------------------------------------------------
       # 기타 설정
       # ----------------------------------------------------------------------
 

@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.23 - SSO Token Validation API & SSO Login Page)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.23
+    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.24 - SSO_AUTO_CREATE_USERS 제거)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.24
 
     # 또는 latest 태그 (개발용 - 최신 릴리즈)
     # image: ghcr.io/aidoop/label-studio-custom:latest
@@ -139,8 +139,8 @@ services:
       # SSO 토큰 만료 시간 (초) - 기본 10분
       SSO_TOKEN_EXPIRY: ${SSO_TOKEN_EXPIRY:-600}
 
-      # 사용자 자동 생성 여부 (true/false)
-      SSO_AUTO_CREATE_USERS: ${SSO_AUTO_CREATE_USERS:-true}
+      # 사용자 자동 생성: Custom SSO Token Validation API 사용으로 불필요
+      # label_studio.py에서 False로 고정됨 (사전 등록 사용자만 허용)
 
       # ----------------------------------------------------------------------
       # Sentry 설정 (에러 추적)

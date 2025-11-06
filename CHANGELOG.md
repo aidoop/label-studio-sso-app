@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-11-07
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.23 → **v1.20.0-sso.24**
+- **주요 변경 사항**:
+  - `SSO_AUTO_CREATE_USERS` 환경변수 제거 (False로 고정)
+  - Custom SSO Token Validation API 사용으로 자동 생성 불필요
+  - 사전 등록된 사용자만 접근 가능 (폐쇄형 시스템)
+- **docker-compose.yml**: `SSO_AUTO_CREATE_USERS` 환경변수 제거
+- **참조**: [label-studio-custom v1.20.0-sso.24 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso24---2025-11-07)
+
 ## [1.2.0] - 2025-11-07
 
 ### Changed

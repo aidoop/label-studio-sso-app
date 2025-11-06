@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-07
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.22 → **v1.20.0-sso.23**
+- **주요 변경 사항**:
+  - Custom SSO Token Validation API 추가 (사전 사용자 검증)
+  - SSO 전용 로그인 페이지 구현 (iframe 통합 지원)
+  - `custom-api/sso.py`: JWT 발급 전 사용자 존재 여부 검증
+  - `custom-templates/sso_login.html`: iframe에서 invalid token 시 표시되는 페이지
+- **참조**: [label-studio-custom v1.20.0-sso.23 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso23---2025-11-07)
+
+#### Backend API 개선
+- **Custom SSO Token Validation API 사용**:
+  - 기존 `/api/sso/token` → `/api/custom/sso/token`으로 변경
+  - 사용자 존재 여부를 먼저 검증한 후 JWT 토큰 발급
+  - 명확한 에러 코드 반환: `USER_NOT_FOUND`, `USER_INACTIVE`, `INVALID_REQUEST`
+- **테스트 엔드포인트 추가**:
+  - `GET /api/sso/invalid-token`: 일부러 잘못된 JWT 토큰 설정
+  - iframe 환경에서 SSO 오류 페이지 테스트 용도
+
+#### Frontend 테스트 기능 추가
+- **새로운 테스트 버튼**:
+  - 🔴 "Login as Non-existent User": Custom SSO Token API 에러 테스트
+    - Label Studio에 존재하지 않는 사용자로 토큰 발급 시도
+    - `USER_NOT_FOUND` 에러 응답 확인
+  - 🟠 "Test Invalid Token + iframe": iframe SSO 오류 페이지 테스트
+    - 유효한 토큰으로 프로젝트 리스트 가져오기
+    - Invalid JWT 토큰으로 교체
+    - iframe에서 SSO 전용 로그인 페이지 표시 확인
+
+#### Docker Compose 설정 개선
+- **환경변수 주석 정리**:
+  - `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` 관련 주석 명확화
+  - 허용 값: `1/true/yes/on` (True), `0/false/no/off` (False)
+  - 커스텀 설정 파일에서 `get_bool_env`로 처리되므로 docker-compose.yml에서 제거
+
+### Added
+
+#### 테스트 사용자 지원
+- `nonexistent@nubison.io`: Label Studio에 존재하지 않는 테스트 사용자
+- Backend 허용 사용자 목록에 추가
+
+### Technical Details
+
+#### Backend Changes (`server.js`)
+```javascript
+// Before
+const response = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {...});
+
+// After
+const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
+```
+
+#### Frontend Changes (`App.vue`)
+- 3단계 테스트 플로우 구현:
+  1. Valid token 발급 (admin@nubison.io)
+  2. 프로젝트 리스트 가져오기
+  3. Invalid token으로 교체 → iframe 테스트
+
 ## [1.1.1] - 2025-10-30
 
 ### Changed

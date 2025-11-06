@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.22 - Custom Export API 동적 날짜 필드 필터링)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.22
+    # 퍼블리시된 커스텀 이미지 사용 (v1.20.0-sso.23 - SSO Token Validation API & SSO Login Page)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.23
 
     # 또는 latest 태그 (개발용 - 최신 릴리즈)
     # image: ghcr.io/aidoop/label-studio-custom:latest
@@ -169,6 +169,13 @@ services:
       # 예: .nubison.localhost
       SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
       CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
+
+      # HTTPS 환경에서 Secure 플래그 설정 (개발/프로덕션에서는 true 필수!)
+      # SESSION_COOKIE_SECURE와 CSRF_COOKIE_SECURE는 커스텀 설정 파일에서 처리됨
+      # 환경변수 설정 시 사용 가능한 값:
+      #   - True: 1, true, yes, on
+      #   - False: 0, false, no, off
+      # 예: SESSION_COOKIE_SECURE=1 또는 SESSION_COOKIE_SECURE=true
 
       # ----------------------------------------------------------------------
       # iframe 임베딩 보안 헤더 설정 (v1.20.0-sso.19+)

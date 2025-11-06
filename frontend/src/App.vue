@@ -35,6 +35,22 @@
             {{ loading ? "Setting up..." : "Login as Manager" }}
             <small>manager@nubison.io</small>
           </button>
+          <button
+            @click="setupSSO('nonexistent@nubison.io')"
+            :disabled="loading"
+            class="user-btn test-user-btn"
+          >
+            {{ loading ? "Setting up..." : "Login as Non-existent User" }}
+            <small>nonexistent@nubison.io (API 에러 테스트)</small>
+          </button>
+          <button
+            @click="setupInvalidToken"
+            :disabled="loading"
+            class="user-btn test-user-btn invalid-token-btn"
+          >
+            {{ loading ? "Setting up..." : "Test Invalid Token + iframe" }}
+            <small>iframe SSO 오류 페이지 테스트</small>
+          </button>
         </div>
 
         <p v-if="message" :class="{ error: isError }">{{ message }}</p>
@@ -223,6 +239,63 @@ function selectProject(project) {
   selectedProject.value = project;
 }
 
+async function setupInvalidToken() {
+  loading.value = true;
+  message.value = "Step 1: Getting valid token to fetch projects...";
+  isError.value = false;
+
+  try {
+    // Step 1: 먼저 유효한 토큰으로 로그인하여 프로젝트 리스트 가져오기
+    const tokenResponse = await fetch(
+      `http://nubison.localhost:3001/api/sso/token?email=admin@nubison.io`,
+      {
+        credentials: "include",
+      }
+    );
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenData.success) {
+      throw new Error("Failed to get valid token");
+    }
+
+    message.value = "Step 2: Fetching projects with valid token...";
+
+    // Step 2: 프로젝트 리스트 가져오기
+    await fetchProjects();
+
+    if (projects.value.length === 0) {
+      throw new Error("No projects found. Please create a project first.");
+    }
+
+    message.value = "Step 3: Replacing with invalid token for testing...";
+
+    // Step 3: Invalid JWT 토큰으로 교체
+    const invalidResponse = await fetch(
+      "http://nubison.localhost:3001/api/sso/invalid-token",
+      {
+        credentials: "include",
+      }
+    );
+
+    const invalidData = await invalidResponse.json();
+
+    if (invalidData.success) {
+      user.value = "test-invalid-token";
+      ssoReady.value = true;
+      message.value = "✓ Invalid token set. Now select a project to see SSO error page in iframe.";
+    } else {
+      message.value = `Error: ${invalidData.message}`;
+      isError.value = true;
+    }
+  } catch (error) {
+    message.value = `Error: ${error.message}`;
+    isError.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
+
 function resetSSO() {
 
   ssoReady.value = false;
@@ -338,6 +411,26 @@ button.secondary:hover {
   font-size: 12px;
   font-weight: 400;
   opacity: 0.9;
+}
+
+.test-user-btn {
+  background: #dc3545;
+  border: 2px dashed #c82333;
+}
+
+.test-user-btn:hover:not(:disabled) {
+  background: #c82333;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.invalid-token-btn {
+  background: #fd7e14;
+  border: 2px dashed #e8590c;
+}
+
+.invalid-token-btn:hover:not(:disabled) {
+  background: #e8590c;
+  box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4);
 }
 
 .info {

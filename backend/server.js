@@ -113,9 +113,14 @@ function getWebhookStats() {
 
 /**
  * Label Studio에서 JWT 토큰 발급
+ *
+ * Custom SSO Token Validation API 사용:
+ * - 사용자 존재 여부를 먼저 검증한 후 JWT 토큰 발급
+ * - 404: 사용자가 존재하지 않음
+ * - 403: 사용자가 비활성화됨
  */
 async function issueJWT(email) {
-  const response = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {
+  const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {
     method: "POST",
     headers: {
       Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
@@ -125,8 +130,11 @@ async function issueJWT(email) {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to get SSO token: ${response.status} - ${errorText}`);
+    const errorData = await response.json().catch(() => ({}));
+    const errorCode = errorData.error_code || 'UNKNOWN_ERROR';
+    const errorMessage = errorData.error || `HTTP ${response.status}`;
+
+    throw new Error(`[${errorCode}] ${errorMessage}`);
   }
 
   return await response.json();
@@ -167,6 +175,46 @@ function clearSessionCookies(res) {
 // ============================================================================
 
 /**
+ * 테스트용: Invalid JWT 토큰 설정
+ *
+ * 일부러 잘못된 JWT 토큰을 쿠키에 설정하여
+ * iframe 환경에서 SSO 전용 로그인 페이지가 제대로 표시되는지 테스트
+ */
+app.get("/api/sso/invalid-token", async (req, res) => {
+  try {
+    console.log("[SSO Test] Setting invalid JWT token...");
+
+    // 기존 Django 세션 쿠키 삭제
+    clearSessionCookies(res);
+
+    // 일부러 잘못된 JWT 토큰 설정
+    const invalidToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid_payload_here.invalid_signature";
+
+    res.cookie("ls_auth_token", invalidToken, {
+      domain: ".nubison.localhost",
+      path: "/",
+      httpOnly: false,
+      sameSite: "lax",
+      maxAge: 600 * 1000, // 10분
+    });
+
+    console.log("[SSO Test] Invalid token set successfully");
+
+    res.json({
+      success: true,
+      message: "Invalid JWT token set (for testing SSO error page)",
+      token: invalidToken.substring(0, 50) + "...",
+    });
+  } catch (error) {
+    console.error("[SSO Test] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
  * SSO 토큰 발급 엔드포인트
  *
  * Label Studio에서 JWT 토큰을 발급받아 쿠키에 설정
@@ -184,7 +232,8 @@ app.get("/api/sso/token", async (req, res) => {
     const allowedUsers = [
       "admin@nubison.io",
       "annotator@nubison.io",
-      "manager@nubison.io"
+      "manager@nubison.io",
+      "nonexistent@nubison.io" // 테스트용: Label Studio에 존재하지 않는 사용자
     ];
     if (!allowedUsers.includes(userEmail)) {
       return res.status(403).json({

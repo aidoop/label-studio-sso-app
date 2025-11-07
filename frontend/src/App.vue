@@ -53,6 +53,24 @@
           </button>
         </div>
 
+        <!-- Custom Email Login -->
+        <div class="custom-login">
+          <h3>또는 커스텀 이메일로 로그인</h3>
+          <form @submit.prevent="setupCustomSSO" class="custom-form">
+            <input
+              v-model="customEmail"
+              type="email"
+              placeholder="test_user@nubison.io"
+              :disabled="loading"
+              required
+            />
+            <button type="submit" :disabled="loading || !customEmail" class="custom-btn">
+              {{ loading ? "Setting up..." : "로그인" }}
+            </button>
+          </form>
+          <p class="hint">테스트 유저 또는 다른 사용자의 이메일을 입력하세요</p>
+        </div>
+
         <p v-if="message" :class="{ error: isError }">{{ message }}</p>
       </div>
     </div>
@@ -89,6 +107,12 @@
           @click="activeTab = 'export-api'"
         >
           📊 Export API
+        </button>
+        <button
+          :class="['tab-btn', { active: activeTab === 'test-user' }]"
+          @click="activeTab = 'test-user'"
+        >
+          👤 Test User
         </button>
       </div>
 
@@ -134,6 +158,11 @@
         <ExportAPITest />
       </div>
 
+      <!-- Test User Creation Tab -->
+      <div v-if="!selectedProject && activeTab === 'test-user'" class="test-user">
+        <TestUserCreation />
+      </div>
+
       <!-- 프로젝트 선택된 경우: LabelStudioWrapper -->
       <div v-if="selectedProject" class="project-view">
         <div class="project-header">
@@ -156,11 +185,12 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import LabelStudioWrapper from "./components/LabelStudioWrapper.vue";
 import WebhookMonitor from "./components/WebhookMonitor.vue";
 import ProjectAPITest from "./components/ProjectAPITest.vue";
 import ExportAPITest from "./components/ExportAPITest.vue";
+import TestUserCreation from "./components/TestUserCreation.vue";
 
 const ssoReady = ref(false);
 const loading = ref(false);
@@ -171,6 +201,7 @@ const projects = ref([]);
 const selectedProject = ref(null);
 const loadingProjects = ref(false);
 const activeTab = ref("projects"); // 'projects' or 'webhooks'
+const customEmail = ref(""); // Custom email for login
 
 async function setupSSO(email) {
   loading.value = true;
@@ -296,14 +327,57 @@ async function setupInvalidToken() {
   }
 }
 
-function resetSSO() {
+async function setupCustomSSO() {
+  if (!customEmail.value) return;
+  await setupSSO(customEmail.value);
+  customEmail.value = ""; // Clear input after login
+}
 
+function resetSSO() {
   ssoReady.value = false;
   message.value = "";
   user.value = "";
   projects.value = [];
   selectedProject.value = null;
+  customEmail.value = "";
 }
+
+// 쿠키에서 JWT 토큰 확인
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// 페이지 로드 시 자동 로그인 체크
+async function checkAutoLogin() {
+  const token = getCookie('ls_auth_token');
+
+  if (token) {
+    // URL 파라미터에서 사용자 이메일 가져오기
+    const urlParams = new URLSearchParams(window.location.search);
+    const userEmail = urlParams.get('user');
+
+    console.log('[Auto Login] JWT token found, loading projects...');
+    ssoReady.value = true;
+    user.value = userEmail || 'auto-login';
+    message.value = 'Loading projects...';
+
+    try {
+      await fetchProjects();
+      activeTab.value = 'projects';
+    } catch (error) {
+      console.error('[Auto Login] Error loading projects:', error);
+      // 프로젝트 로드 실패 시 로그인 화면으로
+      resetSSO();
+    }
+  }
+}
+
+onMounted(() => {
+  checkAutoLogin();
+});
 </script>
 
 <style scoped>
@@ -357,6 +431,67 @@ h1 {
 .card h2 {
   margin-top: 0;
   color: #333;
+}
+
+.custom-login {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.custom-login h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.custom-form {
+  display: flex;
+  gap: 12px;
+}
+
+.custom-form input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.custom-form input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.custom-btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: #28a745;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 0;
+}
+
+.custom-btn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.custom-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: #999;
 }
 
 button {

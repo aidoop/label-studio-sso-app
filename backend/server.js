@@ -228,21 +228,6 @@ app.get("/api/sso/token", async (req, res) => {
     // Query parameter로 사용자 선택
     const userEmail = req.query.email || "admin@nubison.io";
 
-    // 허용된 사용자만 처리
-    const allowedUsers = [
-      "admin@nubison.io",
-      "annotator@nubison.io",
-      "manager@nubison.io",
-      "user2@nubison.io", // API로 생성한 테스트 사용자
-      "nonexistent@nubison.io" // 테스트용: Label Studio에 존재하지 않는 사용자
-    ];
-    if (!allowedUsers.includes(userEmail)) {
-      return res.status(403).json({
-        success: false,
-        message: `User ${userEmail} is not authorized`,
-      });
-    }
-
     console.log(`[SSO Token] User: ${userEmail}`);
 
     // Label Studio에서 JWT 토큰 발급
@@ -631,6 +616,245 @@ app.get("/api/webhooks/stats", (req, res) => {
   }
 });
 
+// ============================================================================
+// Test Endpoints (사용자 생성 테스트용)
+// ============================================================================
+
+/**
+ * 신규 사용자 생성 및 SSO 로그인 테스트
+ *
+ * POST /api/test/create-user
+ *
+ * 테스트 내용:
+ * 1. Label Studio API로 신규 사용자 생성
+ * 2. active_organization 자동 설정 확인 (Signal)
+ * 3. SSO 토큰 발급 테스트
+ * 4. SSO 로그인 테스트
+ *
+ * Request Body:
+ * {
+ *   "email": "test@example.com",
+ *   "firstName": "Test",
+ *   "lastName": "User"
+ * }
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "steps": {
+ *     "userCreation": {...},
+ *     "userVerification": {...},
+ *     "ssoTokenIssue": {...},
+ *     "ssoLogin": {...}
+ *   },
+ *   "summary": {
+ *     "userCreated": true,
+ *     "hasActiveOrganization": true,  // Signal이 작동하면 true
+ *     "ssoTokenIssued": true,
+ *     "canLogin": true
+ *   }
+ * }
+ */
+app.post("/api/test/create-user", async (req, res) => {
+  try {
+    const { email, firstName, lastName } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "email is required",
+      });
+    }
+
+    console.log(`[Test] Creating new user and testing auto-organization: ${email}`);
+
+    const result = {
+      success: true,
+      steps: {},
+    };
+
+    // Step 1: Label Studio API로 사용자 생성
+    try {
+      const createResponse = await fetch(`${LABEL_STUDIO_URL}/api/users/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          username: email,
+          first_name: firstName || "Test",
+          last_name: lastName || "User",
+          password: `TestPass${Date.now()}!`,
+        }),
+      });
+
+      const userData = await createResponse.json();
+
+      result.steps.userCreation = {
+        status: createResponse.status,
+        success: createResponse.ok,
+        data: userData,
+      };
+
+      if (!createResponse.ok) {
+        result.success = false;
+        result.error = "User creation failed";
+        return res.json(result);
+      }
+
+      console.log(`[Test] User created: ${email} (ID: ${userData.id})`);
+    } catch (error) {
+      result.success = false;
+      result.steps.userCreation = {
+        success: false,
+        error: error.message,
+      };
+      return res.json(result);
+    }
+
+    // Step 2: 생성된 사용자 정보 확인 (active_organization 확인)
+    try {
+      const userResponse = await fetch(`${LABEL_STUDIO_URL}/api/users/?email=${email}`, {
+        headers: {
+          Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+        },
+      });
+
+      const users = await userResponse.json();
+      const user = users.find((u) => u.email === email);
+
+      result.steps.userVerification = {
+        success: true,
+        user: {
+          id: user?.id,
+          email: user?.email,
+          active_organization: user?.active_organization,
+          active_organization_meta: user?.active_organization_meta,
+        },
+        hasActiveOrganization: !!user?.active_organization,
+        signalWorked: !!user?.active_organization,  // Signal이 작동했는지 확인
+      };
+
+      console.log(`[Test] User verification - active_organization: ${user?.active_organization || 'null'}`);
+      console.log(`[Test] Signal status: ${user?.active_organization ? 'WORKING ✓' : 'NOT WORKING ✗'}`);
+    } catch (error) {
+      result.steps.userVerification = {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    // Step 3: SSO Token 발급 시도
+    try {
+      const tokenResponse = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const tokenData = await tokenResponse.json();
+
+      result.steps.ssoTokenIssue = {
+        status: tokenResponse.status,
+        success: tokenResponse.ok,
+        data: tokenData,
+      };
+
+      console.log(`[Test] SSO token issue - status: ${tokenResponse.status}`);
+
+      // Step 4: 발급된 토큰으로 Label Studio 로그인 시도
+      if (tokenResponse.ok && tokenData.token) {
+        try {
+          // 메인 페이지로 이동 (프로젝트 리스트 표시)
+          const loginUrl = `http://nubison.localhost:3000/?user=${encodeURIComponent(email)}`;
+
+          // 실제 로그인은 브라우저에서 수행해야 하므로 URL만 제공
+          result.steps.ssoLogin = {
+            success: true,
+            loginUrl,
+            token: tokenData.token,
+            message: "Token issued successfully. Click the link to view projects.",
+          };
+
+          console.log(`[Test] SSO login URL generated: ${loginUrl}`);
+        } catch (error) {
+          result.steps.ssoLogin = {
+            success: false,
+            error: error.message,
+          };
+        }
+      } else {
+        result.steps.ssoLogin = {
+          success: false,
+          message: "Cannot test login - token issue failed",
+        };
+      }
+    } catch (error) {
+      result.steps.ssoTokenIssue = {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    // 최종 결과 판정
+    result.summary = {
+      userCreated: result.steps.userCreation?.success || false,
+      hasActiveOrganization: result.steps.userVerification?.hasActiveOrganization || false,
+      ssoTokenIssued: result.steps.ssoTokenIssue?.success || false,
+      canLogin: result.steps.ssoLogin?.success || false,
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error("[Test] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * 전체 사용자 목록 조회
+ *
+ * GET /api/test/users
+ */
+app.get("/api/test/users", async (req, res) => {
+  try {
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/users/`, {
+      headers: {
+        Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+      },
+    });
+
+    const users = await response.json();
+
+    res.json({
+      success: true,
+      count: users.length,
+      users: users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        first_name: u.first_name,
+        last_name: u.last_name,
+        active_organization: u.active_organization,
+        is_superuser: u.is_superuser,
+      })),
+    });
+  } catch (error) {
+    console.error("[Test] Error fetching users:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
@@ -650,6 +874,10 @@ app.listen(PORT, () => {
 ║    GET  /api/webhooks/events     - Get webhook event list      ║
 ║    GET  /api/webhooks/stream     - Real-time SSE stream        ║
 ║    GET  /api/webhooks/stats      - Webhook statistics          ║
+║                                                                ║
+║  Test Endpoints:                                               ║
+║    POST /api/test/create-user    - Create user & test Signal  ║
+║    GET  /api/test/users          - List test users             ║
 ║                                                                ║
 ║  Utility Endpoints:                                            ║
 ║    GET  /api/health              - Health check                ║

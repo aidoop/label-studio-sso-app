@@ -114,13 +114,13 @@ function getWebhookStats() {
 /**
  * Label Studio에서 JWT 토큰 발급
  *
- * Custom SSO Token Validation API 사용:
+ * label-studio-sso v6.0.8 Native JWT API 사용:
  * - 사용자 존재 여부를 먼저 검증한 후 JWT 토큰 발급
- * - 404: 사용자가 존재하지 않음
- * - 403: 사용자가 비활성화됨
+ * - 422: 사용자가 존재하지 않음 (USER_NOT_FOUND)
+ * - 403: 관리자 권한 필요
  */
 async function issueJWT(email) {
-  const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {
+  const response = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {
     method: "POST",
     headers: {
       Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
@@ -233,6 +233,7 @@ app.get("/api/sso/token", async (req, res) => {
       "admin@nubison.io",
       "annotator@nubison.io",
       "manager@nubison.io",
+      "user2@nubison.io", // API로 생성한 테스트 사용자
       "nonexistent@nubison.io" // 테스트용: Label Studio에 존재하지 않는 사용자
     ];
     if (!allowedUsers.includes(userEmail)) {

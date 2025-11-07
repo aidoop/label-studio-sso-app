@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.27 - active_organization 자동 설정 Signal 추가)
-    image: hatiolab/label-studio-custom:1.20.0-sso.29
+    # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.31 - Auto organization assignment)
+    image: hatiolab/label-studio-custom:1.20.0-sso.31
 
     # 또는 latest 태그 (로컬 빌드)
     # image: hatiolab/label-studio-custom:latest
@@ -160,6 +160,16 @@ services:
 
       # 애플리케이션 호스트 URL
       LABEL_STUDIO_HOST: ${LABEL_STUDIO_HOST:-http://localhost:8080}
+
+      # ----------------------------------------------------------------------
+      # 커스텀 버전 설정 (v1.20.0-sso.30+)
+      # ----------------------------------------------------------------------
+
+      # 커스텀 버전 번호 (UI에 표시)
+      CUSTOM_VERSION: "1.20.0-sso.31"
+
+      # 커스텀 릴리스 날짜
+      CUSTOM_RELEASE_DATE: "2025-11-07"
 
       # ----------------------------------------------------------------------
       # 서브도메인 기반 쿠키 공유 설정

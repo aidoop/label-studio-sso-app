@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2025-11-07
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.24 → **v1.20.0-sso.25**
+- **주요 변경 사항**:
+  - Custom SSO Token API의 JSON 응답 오류 수정
+  - `DEBUG=False` 환경에서 사용자 미존재 시 HTML 404 대신 JSON 422 반환
+  - HTTP 상태 코드: 404 NOT_FOUND → 422 UNPROCESSABLE_ENTITY
+- **참조**: [label-studio-custom v1.20.0-sso.25 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso25---2025-11-07)
+
 ## [1.2.1] - 2025-11-07
 
 ### Changed

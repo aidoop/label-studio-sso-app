@@ -72,8 +72,8 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.31 - Auto organization assignment)
-    image: hatiolab/label-studio-custom:1.20.0-sso.31
+    # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.32 - Release field override)
+    image: hatiolab/label-studio-custom:1.20.0-sso.32
 
     # 또는 latest 태그 (로컬 빌드)
     # image: hatiolab/label-studio-custom:latest
@@ -166,7 +166,7 @@ services:
       # ----------------------------------------------------------------------
 
       # 커스텀 버전 번호 (UI에 표시)
-      CUSTOM_VERSION: "1.20.0-sso.31"
+      CUSTOM_VERSION: "1.20.0-sso.32"
 
       # 커스텀 릴리스 날짜
       CUSTOM_RELEASE_DATE: "2025-11-07"

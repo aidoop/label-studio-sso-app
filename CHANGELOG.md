@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2025-11-07
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.31 → **v1.20.0-sso.32**
+- **주요 변경 사항**:
+  - Version API의 `release` 필드 오버라이드
+  - UI에서 커스텀 버전 표시 (v1.20.0-sso.32)
+  - `base_release` 필드에 원본 버전 백업
+- **참조**: [label-studio-custom v1.20.0-sso.32 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso32---2025-11-07)
+
+### Added
+
+#### Backend: Label Studio Version API 프록시
+- **목적**: 프론트엔드에서 Label Studio 버전 정보 조회
+- **엔드포인트**: `GET /api/labelstudio/version`
+- **기능**:
+  - Label Studio의 `/api/version` API를 프록시
+  - 커스텀 버전 정보 반환 (release: "1.20.0-sso.32")
+  - 인증 불필요 (public endpoint)
+- **응답 예시**:
+  ```json
+  {
+    "release": "1.20.0-sso.32",
+    "base_release": "1.20.0",
+    "custom_version": "1.20.0-sso.32",
+    "custom_edition": "Community + SSO Custom",
+    "custom_release_date": "2025-11-07",
+    "custom_features": [...]
+  }
+  ```
+
+### Technical Details
+
+- **Backend**: Express.js proxy endpoint (`backend/server.js`)
+- **Docker**: docker-compose.yml 버전 업데이트 (v1.20.0-sso.32)
+- **Environment Variables**: CUSTOM_VERSION, CUSTOM_RELEASE_DATE 업데이트
+
 ## [1.2.3] - 2025-11-07
 
 ### Changed

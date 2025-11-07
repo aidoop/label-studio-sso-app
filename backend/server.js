@@ -400,6 +400,39 @@ app.patch("/api/labelstudio/projects/:projectId", async (req, res) => {
 });
 
 /**
+ * Label Studio Version API 프록시 (GET)
+ * 커스텀 버전 정보 조회
+ */
+app.get("/api/labelstudio/version", async (req, res) => {
+  try {
+    console.log("[Label Studio Proxy] GET /api/version/");
+
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/version/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("[Label Studio Proxy] Error:", data);
+      return res.status(response.status).json(data);
+    }
+
+    console.log(`[Label Studio Proxy] Success: Version ${data.custom_version || data.release}`);
+    res.json(data);
+  } catch (error) {
+    console.error("[Label Studio Proxy] Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
  * Label Studio Custom Export API 프록시 (POST)
  * MLOps 통합을 위한 필터링된 Task Export
  */
@@ -896,6 +929,9 @@ app.listen(PORT, () => {
 ║                                                                ║
 ║  Project Endpoints:                                            ║
 ║    GET  /api/projects            - Get project list            ║
+║                                                                ║
+║  Label Studio Proxy Endpoints:                                ║
+║    GET  /api/labelstudio/version - Get version info            ║
 ║                                                                ║
 ║  Webhook Endpoints:                                            ║
 ║    POST /api/webhooks/annotation - Receive webhook events      ║

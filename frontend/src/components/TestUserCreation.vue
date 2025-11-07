@@ -41,6 +41,16 @@
             />
           </div>
         </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              v-model="newUser.isSuperuser"
+              class="checkbox"
+            />
+            <span>슈퍼유저로 생성 (Admin 권한)</span>
+          </label>
+        </div>
         <button type="submit" :disabled="loading" class="primary-btn">
           {{ loading ? "생성 중..." : "사용자 생성 + Signal 테스트 + SSO 로그인" }}
         </button>
@@ -192,7 +202,7 @@
             >
               {{ user.active_organization || 'No active org' }}
             </span>
-            <span v-if="user.is_superuser" class="badge admin">Superuser</span>
+            <span v-if="user.is_superuser" class="badge superuser">Superuser</span>
           </div>
           <div class="user-actions">
             <button
@@ -227,7 +237,8 @@ const errorMessage = ref('');
 const newUser = ref({
   email: '',
   firstName: '',
-  lastName: ''
+  lastName: '',
+  isSuperuser: false
 });
 
 // 테스트 사용자 생성 + SSO 로그인 테스트
@@ -245,7 +256,8 @@ async function createTestUser() {
       body: JSON.stringify({
         email: newUser.value.email,
         firstName: newUser.value.firstName,
-        lastName: newUser.value.lastName
+        lastName: newUser.value.lastName,
+        isSuperuser: newUser.value.isSuperuser
       })
     });
 
@@ -258,7 +270,8 @@ async function createTestUser() {
       newUser.value = {
         email: '',
         firstName: '',
-        lastName: ''
+        lastName: '',
+        isSuperuser: false
       };
 
       // 테스트 사용자 목록 새로고침
@@ -646,9 +659,23 @@ pre {
   color: #856404;
 }
 
-.badge.admin {
+.badge.superuser {
   background: #667eea;
   color: white;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .login-btn {

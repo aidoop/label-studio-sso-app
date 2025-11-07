@@ -657,7 +657,7 @@ app.get("/api/webhooks/stats", (req, res) => {
  */
 app.post("/api/test/create-user", async (req, res) => {
   try {
-    const { email, firstName, lastName } = req.body;
+    const { email, firstName, lastName, isSuperuser } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -666,7 +666,7 @@ app.post("/api/test/create-user", async (req, res) => {
       });
     }
 
-    console.log(`[Test] Creating new user and testing auto-organization: ${email}`);
+    console.log(`[Test] Creating new user and testing auto-organization: ${email} (superuser: ${isSuperuser || false})`);
 
     const result = {
       success: true,
@@ -675,27 +675,53 @@ app.post("/api/test/create-user", async (req, res) => {
 
     // Step 1: Label Studio API로 사용자 생성
     try {
-      const createResponse = await fetch(`${LABEL_STUDIO_URL}/api/users/`, {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      let createResponse;
+      let apiUrl;
+      let requestBody;
+
+      if (isSuperuser) {
+        // 슈퍼유저 생성 API 사용
+        apiUrl = `${LABEL_STUDIO_URL}/api/admin/users/create-superuser`;
+        requestBody = {
           email,
           username: email,
           first_name: firstName || "Test",
           last_name: lastName || "User",
           password: `TestPass${Date.now()}!`,
-        }),
+          create_token: true,
+          add_to_organization: 1,
+        };
+      } else {
+        // 일반 사용자 생성 API 사용
+        apiUrl = `${LABEL_STUDIO_URL}/api/users/`;
+        requestBody = {
+          email,
+          username: email,
+          first_name: firstName || "Test",
+          last_name: lastName || "User",
+          password: `TestPass${Date.now()}!`,
+        };
+      }
+
+      createResponse = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
       const userData = await createResponse.json();
 
+      // 슈퍼유저 API 응답 형식 통일 (success: true, user: {...})
+      const normalizedData = isSuperuser ? userData.user : userData;
+
       result.steps.userCreation = {
         status: createResponse.status,
         success: createResponse.ok,
-        data: userData,
+        data: normalizedData,
+        isSuperuser: isSuperuser || false,
       };
 
       if (!createResponse.ok) {
@@ -704,7 +730,7 @@ app.post("/api/test/create-user", async (req, res) => {
         return res.json(result);
       }
 
-      console.log(`[Test] User created: ${email} (ID: ${userData.id})`);
+      console.log(`[Test] User created: ${email} (ID: ${normalizedData.id}, superuser: ${isSuperuser || false})`);
     } catch (error) {
       result.success = false;
       result.steps.userCreation = {
@@ -826,24 +852,26 @@ app.post("/api/test/create-user", async (req, res) => {
  */
 app.get("/api/test/users", async (req, res) => {
   try {
-    const response = await fetch(`${LABEL_STUDIO_URL}/api/users/`, {
+    // Custom Admin API를 사용하여 is_superuser 정보 포함
+    const response = await fetch(`${LABEL_STUDIO_URL}/api/admin/users/list`, {
       headers: {
         Authorization: `Token ${LABEL_STUDIO_API_TOKEN}`,
       },
     });
 
-    const users = await response.json();
+    const data = await response.json();
 
+    // Custom API 응답 형식 그대로 전달
     res.json({
-      success: true,
-      count: users.length,
-      users: users.map((u) => ({
+      success: data.success,
+      count: data.count,
+      users: data.users.map((u) => ({
         id: u.id,
         email: u.email,
         first_name: u.first_name,
         last_name: u.last_name,
         active_organization: u.active_organization,
-        is_superuser: u.is_superuser,
+        is_superuser: u.is_superuser || false,
       })),
     });
   } catch (error) {

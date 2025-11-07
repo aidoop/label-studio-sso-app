@@ -73,7 +73,7 @@ services:
   # ==============================================================================
   labelstudio:
     # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.27 - active_organization 자동 설정 Signal 추가)
-    image: hatiolab/label-studio-custom:1.20.0-sso.27
+    image: hatiolab/label-studio-custom:1.20.0-sso.29
 
     # 또는 latest 태그 (로컬 빌드)
     # image: hatiolab/label-studio-custom:latest

@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2025-11-07
+
+### Changed
+
+#### Label Studio Custom Image 버전 업데이트
+- **Label Studio Custom Image**: v1.20.0-sso.27 → **v1.20.0-sso.29**
+- **주요 변경 사항**:
+  - Admin User List API 추가 (`GET /api/admin/users/list`)
+  - is_superuser 필드 포함하여 사용자 목록 조회 가능
+  - active_organization ForeignKey 직렬화 오류 수정
+- **참조**: [label-studio-custom v1.20.0-sso.29 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso29---2025-11-07)
+
+### Added
+
+#### Superuser 생성 및 관리 기능 (TestUserCreation)
+- **목적**: 테스트 환경에서 superuser 생성 및 확인 기능 추가
+- **Frontend 변경사항**:
+  - `TestUserCreation.vue`: Superuser 생성 체크박스 추가
+  - 사용자 목록에 Superuser 배지 표시
+  - CSS 스타일 추가 (checkbox, superuser badge)
+- **Backend 변경사항**:
+  - `/api/test/create-user`: `isSuperuser` 파라미터 지원
+  - Superuser 생성 시 Admin API 사용 (`/api/admin/users/create-superuser`)
+  - 일반 사용자 생성 시 기본 API 사용 (`/api/users/`)
+  - `/api/test/users`: Custom Admin API 사용하여 is_superuser 정보 조회
+- **주요 기능**:
+  - Superuser/일반 사용자 선택적 생성
+  - 사용자 목록에서 Superuser 여부 시각적으로 확인
+  - Signal에 의한 active_organization 자동 설정 (v1.20.0-sso.27 기능 활용)
+
+### Technical Details
+
+- **Frontend**: Vue 3 Composition API, reactive state management
+- **Backend**: Express.js, Label Studio Admin API 통합
+- **Docker**: docker-compose.yml 버전 업데이트 (v1.20.0-sso.29)
+
 ## [1.2.2] - 2025-11-07
 
 ### Changed

@@ -324,7 +324,7 @@ async function loginAsUser(email) {
 
     if (data.success) {
       // SSO 성공 - 메인 페이지로 이동하여 프로젝트 리스트 표시 (사용자 정보 전달)
-      window.location.href = `http://nubison.localhost:3000/?user=${encodeURIComponent(email)}`;
+      window.location.href = `/?user=${encodeURIComponent(email)}`;
     } else {
       errorMessage.value = `로그인 실패: ${data.message}`;
     }

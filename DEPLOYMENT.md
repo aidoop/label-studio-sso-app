@@ -47,23 +47,38 @@ Stage 2: Production (Backend + Frontend)
 
 배포된 이미지를 사용하여 전체 스택을 실행할 수 있습니다.
 
-### docker-compose.prod.yml 사용
+### 프로덕션 환경 (기본)
 
 ```bash
 # 배포된 이미지로 전체 스택 실행
-docker compose -f docker-compose.prod.yml up -d
+docker compose up -d
 
 # 로그 확인
-docker compose -f docker-compose.prod.yml logs -f
+docker compose logs -f
 
 # 특정 서비스만 로그 확인
-docker compose -f docker-compose.prod.yml logs -f sso-app
+docker compose logs -f sso-app
 
 # 중지 및 제거
-docker compose -f docker-compose.prod.yml down
+docker compose down
 
 # 볼륨까지 제거 (주의: 데이터 삭제됨)
-docker compose -f docker-compose.prod.yml down -v
+docker compose down -v
+```
+
+### 개발 환경
+
+로컬 코드를 수정하면서 개발:
+
+```bash
+# 개발 모드 실행 (코드 변경 시 자동 반영)
+docker compose -f docker-compose.dev.yml up -d
+
+# 로그 확인
+docker compose -f docker-compose.dev.yml logs -f
+
+# 중지
+docker compose -f docker-compose.dev.yml down
 ```
 
 ### 포함된 서비스

@@ -1,0 +1,375 @@
+version: "3.8"
+
+# ==============================================================================
+# Label Studio + PostgreSQL + SSO 통합 환경
+# ==============================================================================
+#
+# 이 Docker Compose 파일은 다음 서비스를 포함합니다:
+# 1. PostgreSQL 13.18 - 데이터베이스
+# 2. Label Studio 1.20.0 - 메인 애플리케이션 (SSO 통합)
+#
+# 사용 방법:
+#   docker-compose up -d        # 백그라운드에서 실행
+#   docker-compose logs -f      # 로그 확인
+#   docker-compose down         # 중지 및 제거
+#   docker-compose down -v      # 중지, 제거 및 볼륨 삭제
+#
+# ==============================================================================
+
+services:
+  # ==============================================================================
+  # PostgreSQL 데이터베이스
+  # ==============================================================================
+  postgres:
+    # PostgreSQL 13.18 공식 이미지
+    image: postgres:13.18
+
+    container_name: label-studio-postgres
+
+    # 컨테이너 재시작 정책 (항상 재시작)
+    restart: unless-stopped
+
+    # 환경변수 설정
+    environment:
+      # PostgreSQL 데이터베이스 이름
+      POSTGRES_DB: ${POSTGRES_DB:-labelstudio}
+
+      # PostgreSQL 사용자명
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+
+      # PostgreSQL 비밀번호
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+      # PostgreSQL 데이터 디렉토리
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    # 볼륨 마운트 (데이터 영속성)
+    volumes:
+      # PostgreSQL 데이터 저장소
+      - postgres_data:/var/lib/postgresql/data
+
+      # 초기화 스크립트 (선택사항)
+      # - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+
+    # 포트 매핑 (호스트:컨테이너)
+    # 외부에서 PostgreSQL에 직접 접근하려면 아래 주석 해제
+    ports:
+      - "5432:5432"
+
+    # 헬스체크 설정
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    # 네트워크 설정
+    networks:
+      - labelstudio
+
+  # ==============================================================================
+  # Label Studio (SSO 통합)
+  # ==============================================================================
+  labelstudio:
+    # GitHub Container Registry 공식 이미지 사용 (v1.20.0-sso.32 - Release field override)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32
+
+    # 또는 latest 태그 (최신 버전, 프로덕션에서는 특정 버전 권장)
+    # image: ghcr.io/aidoop/label-studio-custom:latest
+
+    # 또는 로컬에서 빌드한 이미지 (개발용):
+    # image: label-studio-custom:local
+    # image: label-studio-custom:1.20.0-sso.32
+
+    container_name: label-studio-app
+
+    # 컨테이너 재시작 정책
+    restart: unless-stopped
+
+    # PostgreSQL이 준비된 후에 시작
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # 환경변수 설정
+    environment:
+      # ----------------------------------------------------------------------
+      # 데이터베이스 설정
+      # ----------------------------------------------------------------------
+
+      # 데이터베이스 타입: 'default' (PostgreSQL) 또는 'sqlite'
+      DJANGO_DB: default
+
+      # PostgreSQL 연결 정보
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-labelstudio}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+      # ----------------------------------------------------------------------
+      # Django 설정
+      # ----------------------------------------------------------------------
+
+      # Django SECRET_KEY (프로덕션에서는 반드시 변경!)
+      # DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-in-production}
+
+      # 디버그 모드 (개발: true, 프로덕션: false)
+      DEBUG: ${DEBUG:-false}
+
+      # 로그 레벨 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      # ----------------------------------------------------------------------
+      # SSO 설정 (label-studio-sso)
+      # ----------------------------------------------------------------------
+
+      # JWT 토큰에서 사용자 ID claim 이름
+      JWT_SSO_NATIVE_USER_ID_CLAIM: user_id
+
+      # JWT 토큰 전달용 쿠키 이름 (권장 방식)
+      JWT_SSO_COOKIE_NAME: ls_auth_token
+
+      # JWT 토큰 전달용 URL 파라미터 이름 (폴백)
+      JWT_SSO_TOKEN_PARAM: token
+
+      # 쿠키 경로 설정
+      JWT_SSO_COOKIE_PATH: /
+
+      # SSO 토큰 만료 시간 (초) - 기본 10분
+      SSO_TOKEN_EXPIRY: ${SSO_TOKEN_EXPIRY:-600}
+
+      # 사용자 자동 생성: Custom SSO Token Validation API 사용으로 불필요
+      # label_studio.py에서 False로 고정됨 (사전 등록 사용자만 허용)
+
+      # ----------------------------------------------------------------------
+      # Sentry 설정 (에러 추적)
+      # ----------------------------------------------------------------------
+
+      # Sentry DSN (비워두면 비활성화)
+      SENTRY_DSN: ""
+      FRONTEND_SENTRY_DSN: ""
+
+      # Sentry 환경 설정
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+      FRONTEND_SENTRY_ENVIRONMENT: ${FRONTEND_SENTRY_ENVIRONMENT:-development}
+
+      # ----------------------------------------------------------------------
+      # Label Studio 일반 설정
+      # ----------------------------------------------------------------------
+
+      # 애플리케이션 호스트 URL
+      LABEL_STUDIO_HOST: ${LABEL_STUDIO_HOST:-http://localhost:8080}
+
+      # ----------------------------------------------------------------------
+      # 커스텀 버전 설정 (v1.20.0-sso.30+)
+      # ----------------------------------------------------------------------
+
+      # 커스텀 버전 번호 (UI에 표시)
+      CUSTOM_VERSION: "1.20.0-sso.32"
+
+      # 커스텀 릴리스 날짜
+      CUSTOM_RELEASE_DATE: "2025-11-07"
+
+      # ----------------------------------------------------------------------
+      # 서브도메인 기반 쿠키 공유 설정
+      # ----------------------------------------------------------------------
+
+      # 쿠키 도메인 (서브도메인 간 세션 공유)
+      # 예: .nubison.localhost
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
+      CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
+
+      # HTTPS 환경에서 Secure 플래그 설정 (HTTPS 프로덕션에서는 true 필수!)
+      # HTTP 로컬 개발 환경에서는 false (기본값)
+      # 환경변수 설정 시 사용 가능한 값:
+      #   - True: 1, true, yes, on
+      #   - False: 0, false, no, off
+      # 예: SESSION_COOKIE_SECURE=true 또는 SESSION_COOKIE_SECURE=1
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-false}
+
+      # ----------------------------------------------------------------------
+      # iframe 임베딩 보안 헤더 설정 (v1.20.0-sso.19+)
+      # ----------------------------------------------------------------------
+
+      # CSP frame-ancestors 설정 (간편 모드, 권장)
+      # 예: "'self' https://console.nubison.io"
+      CSP_FRAME_ANCESTORS: ${CSP_FRAME_ANCESTORS:-}
+
+      # 전체 CSP 정책 설정 (고급 모드)
+      CONTENT_SECURITY_POLICY: ${CONTENT_SECURITY_POLICY:-}
+
+      # X-Frame-Options 설정 (구형 브라우저용)
+      # 옵션: DENY, SAMEORIGIN
+      X_FRAME_OPTIONS: ${X_FRAME_OPTIONS:-}
+
+      # ----------------------------------------------------------------------
+      # 기타 설정
+      # ----------------------------------------------------------------------
+
+      # Feature flags 오프라인 모드
+      FEATURE_FLAGS_OFFLINE: true
+
+      # 스토리지 영속성
+      STORAGE_PERSISTENCE: true
+
+    # 볼륨 마운트
+    volumes:
+      # Label Studio 데이터 저장소 (프로젝트, 업로드 파일 등)
+      - labelstudio_data:/label-studio/data
+
+      # 로그 파일 저장 (선택사항)
+      # - ./logs:/label-studio/logs
+
+    # 포트 매핑 (호스트:컨테이너)
+    ports:
+      - "${LABEL_STUDIO_PORT:-8080}:8080"
+
+    # 헬스체크 설정
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # 네트워크 설정
+    networks:
+      - labelstudio
+
+  # ==============================================================================
+  # Backend API (Express)
+  # ==============================================================================
+  backend:
+    # 백엔드 API 서버
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: label-studio-backend
+
+    # 컨테이너 재시작 정책
+    restart: unless-stopped
+
+    # Label Studio가 준비된 후에 시작
+    depends_on:
+      labelstudio:
+        condition: service_healthy
+
+    # 환경변수 설정
+    environment:
+      # Label Studio URL
+      LABEL_STUDIO_URL: http://labelstudio:8080
+
+      # Label Studio API Token (초기 사용자 생성 후 토큰 발급 필요)
+      # make create-token 명령으로 토큰 생성 후 .env 파일에 설정
+      LABEL_STUDIO_API_TOKEN: ${LABEL_STUDIO_API_TOKEN:-YOUR_API_TOKEN_HERE}
+
+    # 볼륨 마운트 (개발 환경: 코드 변경 시 자동 반영)
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+    # 포트 매핑 (호스트:컨테이너)
+    ports:
+      - "3001:3001"
+
+    # 헬스체크 설정
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # 네트워크 설정
+    networks:
+      - labelstudio
+
+  # ==============================================================================
+  # Frontend (Vite React)
+  # ==============================================================================
+  frontend:
+    # 프론트엔드 개발 서버
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: label-studio-frontend
+
+    # 컨테이너 재시작 정책
+    restart: unless-stopped
+
+    # Backend가 준비된 후에 시작
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    # 환경변수 설정
+    environment:
+      # Vite 개발 서버 설정
+      VITE_BACKEND_URL: http://localhost:3001
+
+    # 볼륨 마운트 (개발 환경: 코드 변경 시 자동 반영)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+    # 포트 매핑 (호스트:컨테이너)
+    ports:
+      - "3000:3000"
+
+    # 네트워크 설정
+    networks:
+      - labelstudio
+
+# ==============================================================================
+# 볼륨 정의
+# ==============================================================================
+# Docker 볼륨을 사용하여 데이터를 영속적으로 저장합니다.
+# 컨테이너를 삭제해도 볼륨의 데이터는 유지됩니다.
+#
+# 볼륨 관리 명령어:
+#   docker volume ls                      # 볼륨 목록 확인
+#   docker volume inspect <volume-name>   # 볼륨 상세 정보
+#   docker volume rm <volume-name>        # 볼륨 삭제
+#
+volumes:
+  # PostgreSQL 데이터 볼륨
+  postgres_data:
+    driver: local
+    # 호스트 경로에 마운트하려면 아래 주석 해제
+    # driver_opts:
+    #   type: none
+    #   device: ./data/postgres
+    #   o: bind
+
+  # Label Studio 데이터 볼륨
+  labelstudio_data:
+    driver: local
+    # 호스트 경로에 마운트하려면 아래 주석 해제
+    # driver_opts:
+    #   type: none
+    #   device: ./data/labelstudio
+    #   o: bind
+
+# ==============================================================================
+# 네트워크 정의
+# ==============================================================================
+# 서비스 간 통신을 위한 네트워크
+#
+networks:
+  labelstudio:
+    driver: bridge
+    # 커스텀 서브넷 설정 (선택사항)
+    # ipam:
+    #   config:
+    #     - subnet: 172.28.0.0/16

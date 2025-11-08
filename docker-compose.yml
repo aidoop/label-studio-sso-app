@@ -124,7 +124,7 @@ services:
   # ==============================================================================
   sso-app:
     # GitHub Container Registry 배포 이미지
-    image: ghcr.io/aidoop/label-studio-sso-app:1.0.0
+    image: ghcr.io/aidoop/label-studio-sso-app:1.0.2
 
     # 또는 latest 태그 사용
     # image: ghcr.io/aidoop/label-studio-sso-app:latest

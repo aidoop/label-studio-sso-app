@@ -43,6 +43,63 @@ Stage 2: Production (Backend + Frontend)
 
 ---
 
+## Docker Compose로 실행
+
+배포된 이미지를 사용하여 전체 스택을 실행할 수 있습니다.
+
+### docker-compose.prod.yml 사용
+
+```bash
+# 배포된 이미지로 전체 스택 실행
+docker compose -f docker-compose.prod.yml up -d
+
+# 로그 확인
+docker compose -f docker-compose.prod.yml logs -f
+
+# 특정 서비스만 로그 확인
+docker compose -f docker-compose.prod.yml logs -f sso-app
+
+# 중지 및 제거
+docker compose -f docker-compose.prod.yml down
+
+# 볼륨까지 제거 (주의: 데이터 삭제됨)
+docker compose -f docker-compose.prod.yml down -v
+```
+
+### 포함된 서비스
+
+| 서비스 | 이미지 | 포트 |
+|--------|--------|------|
+| PostgreSQL | `postgres:13.18` | 5432 |
+| Label Studio | `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32` | 8080 |
+| SSO App | `ghcr.io/aidoop/label-studio-sso-app:1.0.0` | 3000 |
+
+### 환경변수 설정
+
+`.env` 파일에 다음 환경변수를 설정하세요:
+
+```bash
+# PostgreSQL
+POSTGRES_DB=labelstudio
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your-secure-password
+
+# Label Studio
+LABEL_STUDIO_HOST=http://localhost:8080
+DEBUG=false
+LOG_LEVEL=INFO
+
+# SSO App
+LABEL_STUDIO_API_TOKEN=your-api-token-here
+CORS_ORIGIN=*
+
+# 쿠키 설정 (선택사항)
+SESSION_COOKIE_DOMAIN=
+CSRF_COOKIE_DOMAIN=
+```
+
+---
+
 ## GitHub Container Registry 배포
 
 ### 1. GitHub Token 생성

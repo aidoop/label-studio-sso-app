@@ -126,6 +126,8 @@ docker pull ghcr.io/aidoop/label-studio-custom:latest
 
 ### 4. Docker Compose 실행
 
+#### 개발 환경 (로컬 빌드)
+
 ```bash
 cd /Users/super/Documents/GitHub/label-studio-test-app
 
@@ -135,6 +137,26 @@ docker compose up -d
 # 로그 확인
 docker compose logs -f
 ```
+
+#### 프로덕션 환경 (배포된 이미지)
+
+배포된 이미지를 사용하여 실행:
+
+```bash
+# 배포된 이미지로 실행
+docker compose -f docker-compose.prod.yml up -d
+
+# 로그 확인
+docker compose -f docker-compose.prod.yml logs -f
+
+# 중지
+docker compose -f docker-compose.prod.yml down
+```
+
+**사용되는 이미지**:
+- `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32` - Label Studio
+- `ghcr.io/aidoop/label-studio-sso-app:1.0.0` - SSO Sample App
+- `postgres:13.18` - PostgreSQL
 
 ### 5. 초기 사용자 생성
 

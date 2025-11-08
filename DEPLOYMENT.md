@@ -164,7 +164,7 @@ vi k8s/05-ingress-alb.yaml
 
 # 필수 수정사항:
 # 1. ACM Certificate ARN 입력
-# 2. host: sso-app.yourdomain.com 수정
+# 2. host: label-app.hatiolab.com (이미 설정됨)
 
 # Ingress 적용
 kubectl apply -f k8s/05-ingress-alb.yaml
@@ -182,7 +182,7 @@ ALB_ADDRESS=$(kubectl get ingress label-studio-sso-app -n label-studio-sso-app -
 echo $ALB_ADDRESS
 
 # Route53에 CNAME 레코드 추가:
-# Name: sso-app.yourdomain.com
+# Name: label-app.hatiolab.com
 # Type: CNAME
 # Value: $ALB_ADDRESS
 ```
@@ -191,7 +191,7 @@ echo $ALB_ADDRESS
 
 ```bash
 # Health check
-curl https://sso-app.yourdomain.com/api/health
+curl https://label-app.hatiolab.com/api/health
 
 # 응답 예시:
 # {
@@ -201,7 +201,7 @@ curl https://sso-app.yourdomain.com/api/health
 # }
 
 # Frontend 접속
-open https://sso-app.yourdomain.com
+open https://label-app.hatiolab.com
 ```
 
 ---

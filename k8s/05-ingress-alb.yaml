@@ -44,7 +44,7 @@ metadata:
 
 spec:
   rules:
-  - host: sso-app.yourdomain.com  # Update with your domain
+  - host: label-app.hatiolab.com
     http:
       paths:
       - path: /
@@ -54,3 +54,6 @@ spec:
             name: label-studio-sso-app
             port:
               number: 80
+  tls:
+  - hosts:
+    - label-app.hatiolab.com

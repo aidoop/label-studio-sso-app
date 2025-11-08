@@ -103,7 +103,7 @@ image: ghcr.io/aidoop/label-studio-sso-app:1.0.0
 alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:..."
 
 # 도메인 이름
-host: sso-app.yourdomain.com
+host: label-app.hatiolab.com
 \`\`\`
 
 ## 📊 시스템 아키텍처
@@ -115,7 +115,7 @@ host: sso-app.yourdomain.com
          │
     ┌────▼────────────────────┐
     │  AWS ALB (HTTPS)        │
-    │  sso-app.yourdomain.com │
+    │  label-app.hatiolab.com │
     └────┬────────────────────┘
          │
 ┌────────▼────────────────────────┐
@@ -171,7 +171,7 @@ host: sso-app.yourdomain.com
 
 5. **배포 확인**
    \`\`\`bash
-   curl https://sso-app.yourdomain.com/api/health
+   curl https://label-app.hatiolab.com/api/health
    \`\`\`
 
 ## 📝 변경된 파일

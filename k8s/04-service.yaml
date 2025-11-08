@@ -1,0 +1,19 @@
+# ==============================================================================
+# Service for Label Studio SSO Sample App
+# ==============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: label-studio-sso-app
+  namespace: label-studio-sso-app
+  labels:
+    app: label-studio-sso-app
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  selector:
+    app: label-studio-sso-app

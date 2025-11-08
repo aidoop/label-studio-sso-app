@@ -178,16 +178,16 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
   - `POSTGRE_*` 환경변수를 우선적으로 사용
   - 기존 `POSTGRES_*` 환경변수도 폴백으로 지원 (하위 호환성 유지)
 - **영향**: docker-compose.yml의 이미지 태그 업데이트
-- **참조**: [label-studio-custom v1.20.0-sso.18 CHANGELOG](https://github.com/your-org/label-studio-custom/blob/main/CHANGELOG.md#1200-sso18---2025-10-30)
+- **참조**: [label-studio-custom v1.20.0-sso.18 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso18---2025-10-30)
 
 ## [1.1.0] - 2025-10-22
 
 ### Changed
 
 #### 프로젝트 구조 재구성
-- Label Studio 커스텀 이미지 관련 파일을 별도 저장소([label-studio-custom](https://github.com/your-org/label-studio-custom))로 분리
+- Label Studio 커스텀 이미지 관련 파일을 별도 저장소([label-studio-custom](https://github.com/aidoop/label-studio-custom))로 분리
 - 이 프로젝트는 이제 샘플 애플리케이션에만 집중
-- docker-compose.yml에서 커스텀 이미지를 외부 이미지로 사용 (`label-studio-custom:local` 또는 `ghcr.io/your-org/label-studio-custom:1.20.0-sso.1`)
+- docker-compose.yml에서 커스텀 이미지를 외부 이미지로 사용 (`label-studio-custom:local` 또는 `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32`)
 
 #### 제거된 파일 (→ label-studio-custom으로 이동)
 - `Dockerfile`
@@ -215,7 +215,7 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
 ```bash
 # label-studio-custom 저장소 클론
 cd /Users/super/Documents/GitHub
-git clone https://github.com/your-org/label-studio-custom.git
+git clone https://github.com/aidoop/label-studio-custom.git
 cd label-studio-custom
 
 # 이미지 빌드

@@ -1,0 +1,56 @@
+# ==============================================================================
+# Ingress (AWS ALB) for Label Studio SSO Sample App
+# ==============================================================================
+#
+# Prerequisites:
+#   1. AWS Load Balancer Controller installed in cluster
+#   2. ACM certificate created for your domain
+#   3. Route53 hosted zone for DNS
+#
+# Usage:
+#   1. Update annotations with your ACM certificate ARN
+#   2. Update host with your domain name
+#   3. Apply: kubectl apply -f 05-ingress-alb.yaml
+#
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: label-studio-sso-app
+  namespace: label-studio-sso-app
+  annotations:
+    # AWS Load Balancer Controller
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+    # SSL/TLS
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+
+    # Certificate ARN (replace with your ACM certificate)
+    # Example: arn:aws:acm:ap-northeast-2:123456789012:certificate/abc-def-123
+    alb.ingress.kubernetes.io/certificate-arn: "YOUR_ACM_CERTIFICATE_ARN"
+
+    # Health check
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '10'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+
+    # Tags (optional)
+    alb.ingress.kubernetes.io/tags: Environment=production,Application=label-studio-sso-app
+
+spec:
+  rules:
+  - host: sso-app.yourdomain.com  # Update with your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: label-studio-sso-app
+            port:
+              number: 80

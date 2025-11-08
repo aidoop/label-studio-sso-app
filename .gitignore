@@ -33,3 +33,7 @@ yarn-error.log*
 # Docker
 data/
 logs/
+
+# Kubernetes Secrets (actual values)
+k8s/*-actual.yaml
+k8s/01-secret-actual.yaml

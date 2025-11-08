@@ -1,0 +1,10 @@
+# ==============================================================================
+# Namespace for Label Studio SSO Sample App
+# ==============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: label-studio-sso-app
+  labels:
+    app: label-studio-sso-app
+    environment: production

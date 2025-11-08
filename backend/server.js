@@ -1,26 +1,47 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ES Module에서 __dirname 대체
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+
+// 환경 변수 설정
+const NODE_ENV = process.env.NODE_ENV || "development";
+const PORT = parseInt(process.env.PORT || (NODE_ENV === "production" ? "3000" : "3001"));
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://nubison.localhost:3000";
 
 // Label Studio 설정 (환경변수로 관리 권장)
-const LABEL_STUDIO_URL = process.env.LABEL_STUDIO_URL || "http://label.nubison.localhost:8080";
+const LABEL_STUDIO_URL = process.env.LABEL_STUDIO_URL || "http://labelstudio:8080";
 const LABEL_STUDIO_API_TOKEN = process.env.LABEL_STUDIO_API_TOKEN || "YOUR_API_TOKEN_HERE"; // Label Studio의 API Token
 
 // 환경변수 로드 확인 (디버깅용)
+console.log(`[Config] NODE_ENV: ${NODE_ENV}`);
+console.log(`[Config] PORT: ${PORT}`);
+console.log(`[Config] CORS_ORIGIN: ${CORS_ORIGIN}`);
 console.log(`[Config] LABEL_STUDIO_URL: ${LABEL_STUDIO_URL}`);
 console.log(`[Config] LABEL_STUDIO_API_TOKEN: ${LABEL_STUDIO_API_TOKEN ? LABEL_STUDIO_API_TOKEN.substring(0, 10) + '...' : 'NOT SET'}`);
 
+// CORS 설정 (개발/프로덕션 환경 분리)
 app.use(
   cors({
-    origin: "http://nubison.localhost:3000",
+    origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN,
     credentials: true,
   })
 );
 app.use(cookieParser());
 app.use(express.json());
+
+// 정적 파일 서빙 (프로덕션 모드)
+if (NODE_ENV === "production") {
+  const publicPath = path.join(__dirname, "public");
+  console.log(`[Static] Serving static files from: ${publicPath}`);
+  app.use(express.static(publicPath));
+}
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -916,11 +937,28 @@ app.get("/api/test/users", async (req, res) => {
   }
 });
 
+// SPA Fallback: 모든 비-API 라우트를 index.html로 리다이렉트 (프로덕션 모드)
+if (NODE_ENV === "production") {
+  app.get("*", (req, res) => {
+    // API 라우트는 제외
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({
+        success: false,
+        message: "API endpoint not found",
+      });
+    }
+
+    // SPA index.html 서빙
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║  Label Studio SSO Backend                                      ║
 ╠════════════════════════════════════════════════════════════════╣
+║  Mode:             ${NODE_ENV}                                 ║
 ║  Server:           http://localhost:${PORT}                    ║
 ║  Label Studio:     ${LABEL_STUDIO_URL}                         ║
 ║                                                                ║

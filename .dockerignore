@@ -1,0 +1,55 @@
+# ==============================================================================
+# Docker Ignore File for label-studio-sso-app
+# ==============================================================================
+
+# Node modules (will be installed during build)
+**/node_modules/
+**/npm-debug.log
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files (will be provided at runtime)
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+CHANGELOG.md
+DEPLOYMENT.md
+
+# Test files
+**/__tests__/
+**/*.test.js
+**/*.spec.js
+coverage/
+
+# Development docker compose
+docker-compose.yml
+docker-compose.*.yml
+
+# Build artifacts (will be created during build)
+frontend/dist/
+backend/public/
+
+# Logs
+logs/
+*.log

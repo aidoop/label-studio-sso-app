@@ -1,0 +1,30 @@
+# ==============================================================================
+# ConfigMap for Label Studio SSO Sample App
+# ==============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: label-studio-sso-app-config
+  namespace: label-studio-sso-app
+data:
+  # ==============================================================================
+  # Application Settings
+  # ==============================================================================
+  NODE_ENV: "production"
+  PORT: "3000"
+
+  # ==============================================================================
+  # CORS Settings
+  # ==============================================================================
+  # Allow all origins in production (adjust based on your requirements)
+  # For specific origins: "https://console.yourdomain.com"
+  CORS_ORIGIN: "*"
+
+  # ==============================================================================
+  # Label Studio Connection
+  # ==============================================================================
+  # Internal Kubernetes service name (if Label Studio is in the same cluster)
+  LABEL_STUDIO_URL: "http://labelstudio-service.label-studio.svc.cluster.local:8080"
+
+  # Or external URL (if Label Studio is external)
+  # LABEL_STUDIO_URL: "https://label.yourdomain.com"

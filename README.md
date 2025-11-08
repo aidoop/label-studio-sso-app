@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → label-studio-custom:local (또는 ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18)
+├── Label Studio Custom Image  → ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32 (GitHub Container Registry)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -23,7 +23,7 @@ Docker Compose 환경:
 
 이 샘플 앱은 다음 기능을 가진 **label-studio-custom** 이미지를 사용합니다:
 
-- ✅ **SSO 인증** (label-studio-sso v6.0.7 - 커스텀 빌드)
+- ✅ **SSO 인증** (label-studio-sso v6.0.8 - 커스텀 빌드)
   - Native JWT 기반 초기 인증
   - JWT → Django Session 전환 (성능 최적화)
   - JWT 토큰은 세션 생성 후 자동 삭제
@@ -49,6 +49,19 @@ Docker Compose 환경:
   - 빌드 시 정적 파일(JavaScript, CSS) 자동 수집
   - `sw.js` 파일 404 오류 해결
   - 웹 인터페이스 정상 작동 보장
+- ✅ **Admin User Management API** ⭐ **v1.20.0-sso.29+**
+  - Superuser 생성, 승격, 강등 API
+  - 사용자 목록 조회 (is_superuser 포함)
+  - API 토큰 자동 생성
+  - 엔드포인트: `POST /api/admin/users/create-superuser`, `GET /api/admin/users/list`
+- ✅ **Auto Organization Assignment** ⭐ **v1.20.0-sso.27+**
+  - Django Signals를 통한 자동 organization 설정
+  - 사용자 생성 시 생성자의 organization에 자동 추가
+  - active_organization 자동 설정으로 로그인 불가 문제 방지
+- ✅ **Custom Version API** ⭐ **v1.20.0-sso.30+**
+  - UI에 커스텀 버전 표시 (v1.20.0-sso.32)
+  - release 필드 오버라이드로 UI 하단에 커스텀 버전 표시
+  - 엔드포인트: `GET /api/version`
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 
@@ -92,23 +105,22 @@ cp .env.example .env
 ```bash
 # label-studio-custom 저장소 클론
 cd /Users/super/Documents/GitHub
-git clone https://github.com/your-org/label-studio-custom.git
+git clone https://github.com/aidoop/label-studio-custom.git
 cd label-studio-custom
 
 # 이미지 빌드
 docker build -t label-studio-custom:local .
 ```
 
-#### Option B: GitHub Container Registry에서 가져오기 (프로덕션)
+#### Option B: GitHub Container Registry에서 가져오기 (권장)
 
 ```bash
-# docker-compose.yml 수정
-# image: label-studio-custom:local
-# → image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18
+# docker-compose.yml에서 이미 설정되어 있음:
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32
 
 # 이미지 pull
-docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.18
-# 또는 latest 태그 사용
+docker pull ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32
+# 또는 latest 태그 사용 (프로덕션에서는 특정 버전 권장)
 docker pull ghcr.io/aidoop/label-studio-custom:latest
 ```
 
@@ -598,7 +610,7 @@ npm run dev
 
 이 샘플 앱이 사용하는 Label Studio Custom Image를 수정하려면:
 
-1. [label-studio-custom](https://github.com/your-org/label-studio-custom) 저장소 클론
+1. [label-studio-custom](https://github.com/aidoop/label-studio-custom) 저장소 클론
 2. 커스터마이징 수정 (config/, custom-permissions/, custom-api/, custom-templates/)
 3. 로컬에서 이미지 빌드:
    ```bash
@@ -699,7 +711,7 @@ cd /Users/super/Documents/GitHub/label-studio-custom
 docker build -t label-studio-custom:local .
 
 # Option B: docker-compose.yml에서 이미지 주소 확인
-# image: ghcr.io/your-org/label-studio-custom:1.20.0-sso.1
+# image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32
 ```
 
 ### 헤더가 숨겨지지 않음
@@ -839,8 +851,8 @@ curl -X POST http://localhost:8080/api/custom/export/ \
 
 ### Label Studio Custom Image
 
-- [label-studio-custom](https://github.com/your-org/label-studio-custom) - 커스텀 이미지 저장소
-- [Custom Image Documentation](https://github.com/your-org/label-studio-custom/blob/main/README.md)
+- [label-studio-custom](https://github.com/aidoop/label-studio-custom) - 커스텀 이미지 저장소
+- [Custom Image Documentation](https://github.com/aidoop/label-studio-custom/blob/main/README.md)
 
 ### Label Studio 공식
 

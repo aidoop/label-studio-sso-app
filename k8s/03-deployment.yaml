@@ -1,0 +1,93 @@
+# ==============================================================================
+# Deployment for Label Studio SSO Sample App
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: label-studio-sso-app
+  namespace: label-studio-sso-app
+  labels:
+    app: label-studio-sso-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: label-studio-sso-app
+  template:
+    metadata:
+      labels:
+        app: label-studio-sso-app
+    spec:
+      containers:
+      - name: app
+        # Update this image reference after pushing to registry
+        # Example: ghcr.io/aidoop/label-studio-sso-app:1.0.0
+        image: ghcr.io/aidoop/label-studio-sso-app:latest
+        imagePullPolicy: Always
+
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+
+        env:
+        # From ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: label-studio-sso-app-config
+              key: NODE_ENV
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: label-studio-sso-app-config
+              key: PORT
+        - name: CORS_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: label-studio-sso-app-config
+              key: CORS_ORIGIN
+        - name: LABEL_STUDIO_URL
+          valueFrom:
+            configMapKeyRef:
+              name: label-studio-sso-app-config
+              key: LABEL_STUDIO_URL
+
+        # From Secret
+        - name: LABEL_STUDIO_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: label-studio-sso-app-secret
+              key: label-studio-api-token
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+
+      # Optional: Pull secrets for private registries
+      # imagePullSecrets:
+      # - name: ghcr-pull-secret

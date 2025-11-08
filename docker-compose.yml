@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 # ==============================================================================
 # Label Studio + PostgreSQL + SSO 통합 환경
@@ -72,14 +72,15 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # 로컬에서 빌드된 이미지 사용 (v1.20.0-sso.32 - Release field override)
-    image: hatiolab/label-studio-custom:1.20.0-sso.32
+    # GitHub Container Registry 공식 이미지 사용 (v1.20.0-sso.32 - Release field override)
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32
 
-    # 또는 latest 태그 (로컬 빌드)
-    # image: hatiolab/label-studio-custom:latest
+    # 또는 latest 태그 (최신 버전, 프로덕션에서는 특정 버전 권장)
+    # image: ghcr.io/aidoop/label-studio-custom:latest
 
-    # 또는 퍼블리시된 이미지 사용 (프로덕션용):
-    # image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.27
+    # 또는 로컬에서 빌드한 이미지 (개발용):
+    # image: label-studio-custom:local
+    # image: label-studio-custom:1.20.0-sso.32
 
     container_name: label-studio-app
 
@@ -180,12 +181,14 @@ services:
       SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
       CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
 
-      # HTTPS 환경에서 Secure 플래그 설정 (개발/프로덕션에서는 true 필수!)
-      # SESSION_COOKIE_SECURE와 CSRF_COOKIE_SECURE는 커스텀 설정 파일에서 처리됨
+      # HTTPS 환경에서 Secure 플래그 설정 (HTTPS 프로덕션에서는 true 필수!)
+      # HTTP 로컬 개발 환경에서는 false (기본값)
       # 환경변수 설정 시 사용 가능한 값:
       #   - True: 1, true, yes, on
       #   - False: 0, false, no, off
-      # 예: SESSION_COOKIE_SECURE=1 또는 SESSION_COOKIE_SECURE=true
+      # 예: SESSION_COOKIE_SECURE=true 또는 SESSION_COOKIE_SECURE=1
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-false}
 
       # ----------------------------------------------------------------------
       # iframe 임베딩 보안 헤더 설정 (v1.20.0-sso.19+)
@@ -275,7 +278,13 @@ services:
 
     # 헬스체크 설정
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3001/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -140,7 +140,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 
-const BACKEND_URL = 'http://nubison.localhost:3001';
+const BACKEND_URL = '';
 const LABELSTUDIO_URL = 'http://label.nubison.localhost:8080';
 
 const projects = ref([]);

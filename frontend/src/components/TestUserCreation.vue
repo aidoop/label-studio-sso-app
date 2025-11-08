@@ -248,7 +248,7 @@ async function createTestUser() {
   testResult.value = null;
 
   try {
-    const response = await fetch('http://nubison.localhost:3001/api/test/create-user', {
+    const response = await fetch('/api/test/create-user', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -292,7 +292,7 @@ async function fetchTestUsers() {
   errorMessage.value = '';
 
   try {
-    const response = await fetch('http://nubison.localhost:3001/api/test/users');
+    const response = await fetch('/api/test/users');
     const data = await response.json();
 
     if (data.success) {
@@ -314,7 +314,7 @@ async function loginAsUser(email) {
 
   try {
     const response = await fetch(
-      `http://nubison.localhost:3001/api/sso/token?email=${encodeURIComponent(email)}`,
+      `/api/sso/token?email=${encodeURIComponent(email)}`,
       {
         credentials: 'include'
       }

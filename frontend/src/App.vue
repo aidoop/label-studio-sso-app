@@ -212,7 +212,7 @@ async function setupSSO(email) {
     // Backend를 통해 JWT 토큰 발급
     message.value = `Setting up SSO for ${email}...`;
     const response = await fetch(
-      `http://nubison.localhost:3001/api/sso/token?email=${encodeURIComponent(
+      `/api/sso/token?email=${encodeURIComponent(
         email
       )}`,
       {
@@ -245,7 +245,7 @@ async function fetchProjects() {
   loadingProjects.value = true;
 
   try {
-    const response = await fetch("http://nubison.localhost:3001/api/projects", {
+    const response = await fetch("/api/projects", {
       credentials: "include",
     });
 
@@ -278,7 +278,7 @@ async function setupInvalidToken() {
   try {
     // Step 1: 먼저 유효한 토큰으로 로그인하여 프로젝트 리스트 가져오기
     const tokenResponse = await fetch(
-      `http://nubison.localhost:3001/api/sso/token?email=admin@nubison.io`,
+      `/api/sso/token?email=admin@nubison.io`,
       {
         credentials: "include",
       }
@@ -303,7 +303,7 @@ async function setupInvalidToken() {
 
     // Step 3: Invalid JWT 토큰으로 교체
     const invalidResponse = await fetch(
-      "http://nubison.localhost:3001/api/sso/invalid-token",
+      "/api/sso/invalid-token",
       {
         credentials: "include",
       }

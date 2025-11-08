@@ -203,7 +203,7 @@ function updateStats() {
 function connectSSE() {
   console.log("[SSE] Connecting to webhook stream...");
 
-  eventSource = new EventSource("http://nubison.localhost:3001/api/webhooks/stream");
+  eventSource = new EventSource("/api/webhooks/stream");
 
   eventSource.onopen = () => {
     console.log("[SSE] Connected");
@@ -251,7 +251,7 @@ function connectSSE() {
 
 async function loadInitialEvents() {
   try {
-    const response = await fetch("http://nubison.localhost:3001/api/webhooks/events");
+    const response = await fetch("/api/webhooks/events");
     const data = await response.json();
 
     if (data.success) {

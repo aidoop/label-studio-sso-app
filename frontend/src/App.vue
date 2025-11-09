@@ -10,38 +10,43 @@
         <h2>Setup SSO Authentication</h2>
         <p>Select a user to authenticate with Label Studio</p>
 
-        <div class="user-buttons">
+        <!-- 사용자 로딩 중 -->
+        <div v-if="loadingUsers" class="loading-users">
+          <p>사용자 목록을 불러오는 중...</p>
+        </div>
+
+        <!-- 사용자 로딩 실패 -->
+        <div v-else-if="usersError" class="users-error">
+          <p class="error">{{ usersError }}</p>
+          <button @click="fetchUsers" class="retry-btn">재시도</button>
+        </div>
+
+        <!-- 사용자 버튼 (동적) -->
+        <div v-else class="user-buttons">
+          <!-- 실제 사용자 -->
           <button
-            @click="setupSSO('admin@nubison.io')"
+            v-for="u in users"
+            :key="u.id"
+            @click="setupSSO(u.email)"
             :disabled="loading"
             class="user-btn"
+            :class="{ 'superuser-btn': u.is_superuser }"
           >
-            {{ loading ? "Setting up..." : "Login as Admin" }}
-            <small>admin@nubison.io</small>
+            {{ loading ? "Setting up..." : `Login as ${u.first_name || 'User'}` }}
+            <small>
+              {{ u.email }}
+              <span v-if="u.is_superuser" class="badge">Admin</span>
+            </small>
           </button>
+
+          <!-- 테스트용 버튼들 -->
           <button
-            @click="setupSSO('annotator@nubison.io')"
-            :disabled="loading"
-            class="user-btn"
-          >
-            {{ loading ? "Setting up..." : "Login as Annotator" }}
-            <small>annotator@nubison.io</small>
-          </button>
-          <button
-            @click="setupSSO('manager@nubison.io')"
-            :disabled="loading"
-            class="user-btn"
-          >
-            {{ loading ? "Setting up..." : "Login as Manager" }}
-            <small>manager@nubison.io</small>
-          </button>
-          <button
-            @click="setupSSO('nonexistent@nubison.io')"
+            @click="setupSSO('nonexistent@hatiolab.com')"
             :disabled="loading"
             class="user-btn test-user-btn"
           >
             {{ loading ? "Setting up..." : "Login as Non-existent User" }}
-            <small>nonexistent@nubison.io (API 에러 테스트)</small>
+            <small>nonexistent@hatiolab.com (API 에러 테스트)</small>
           </button>
           <button
             @click="setupInvalidToken"
@@ -60,7 +65,7 @@
             <input
               v-model="customEmail"
               type="email"
-              placeholder="test_user@nubison.io"
+              placeholder="test_user@hatiolab.com"
               :disabled="loading"
               required
             />
@@ -203,6 +208,11 @@ const loadingProjects = ref(false);
 const activeTab = ref("projects"); // 'projects' or 'webhooks'
 const customEmail = ref(""); // Custom email for login
 
+// 사용자 목록
+const users = ref([]);
+const loadingUsers = ref(false);
+const usersError = ref("");
+
 async function setupSSO(email) {
   loading.value = true;
   message.value = `Setting up SSO for ${email}...`;
@@ -270,6 +280,31 @@ function selectProject(project) {
   selectedProject.value = project;
 }
 
+async function fetchUsers() {
+  loadingUsers.value = true;
+  usersError.value = "";
+
+  try {
+    const response = await fetch("/api/test/users", {
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      users.value = data.users;
+      console.log(`[Users] Loaded ${data.users.length} users`);
+    } else {
+      usersError.value = data.message || "사용자 목록을 불러올 수 없습니다";
+    }
+  } catch (error) {
+    console.error("[Users] Error:", error);
+    usersError.value = `네트워크 오류: ${error.message}`;
+  } finally {
+    loadingUsers.value = false;
+  }
+}
+
 async function setupInvalidToken() {
   loading.value = true;
   message.value = "Step 1: Getting valid token to fetch projects...";
@@ -278,7 +313,7 @@ async function setupInvalidToken() {
   try {
     // Step 1: 먼저 유효한 토큰으로 로그인하여 프로젝트 리스트 가져오기
     const tokenResponse = await fetch(
-      `/api/sso/token?email=admin@nubison.io`,
+      `/api/sso/token?email=admin@hatiolab.com`,
       {
         credentials: "include",
       }
@@ -377,6 +412,7 @@ async function checkAutoLogin() {
 
 onMounted(() => {
   checkAutoLogin();
+  fetchUsers();  // 사용자 목록 불러오기
 });
 </script>
 
@@ -566,6 +602,60 @@ button.secondary:hover {
 .invalid-token-btn:hover:not(:disabled) {
   background: #e8590c;
   box-shadow: 0 4px 12px rgba(253, 126, 20, 0.4);
+}
+
+.superuser-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid #667eea;
+}
+
+.superuser-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  background: #28a745;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.loading-users {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.users-error {
+  text-align: center;
+  padding: 20px;
+}
+
+.users-error .error {
+  color: #dc3545;
+  margin-bottom: 16px;
+}
+
+.retry-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.retry-btn:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
 }
 
 .info {

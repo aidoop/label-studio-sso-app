@@ -141,7 +141,7 @@
 import { ref, computed } from 'vue';
 
 const BACKEND_URL = '';
-const LABELSTUDIO_URL = 'http://label.nubison.localhost:8080';
+const LABELSTUDIO_URL = import.meta.env.VITE_LABEL_STUDIO_URL || 'http://label.hatiolab.localhost:8080';
 
 const projects = ref([]);
 const selectedProject = ref(null);

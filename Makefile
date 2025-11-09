@@ -160,14 +160,14 @@ setup-hosts: ## /etc/hosts 파일에 도메인 추가
 	@echo "$(GREEN)/etc/hosts 파일 설정 중...$(RESET)"
 	@echo ""
 	@echo "$(YELLOW)다음 라인을 /etc/hosts 파일에 추가합니다:$(RESET)"
-	@echo "127.0.0.1 nubison.localhost"
-	@echo "127.0.0.1 label.nubison.localhost"
+	@echo "127.0.0.1 hatiolab.localhost"
+	@echo "127.0.0.1 label.hatiolab.localhost"
 	@echo ""
 	@read -p "계속하시겠습니까? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		echo "127.0.0.1 nubison.localhost" | sudo tee -a /etc/hosts > /dev/null; \
-		echo "127.0.0.1 label.nubison.localhost" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "127.0.0.1 hatiolab.localhost" | sudo tee -a /etc/hosts > /dev/null; \
+		echo "127.0.0.1 label.hatiolab.localhost" | sudo tee -a /etc/hosts > /dev/null; \
 		echo "$(GREEN)완료!$(RESET)"; \
 	else \
 		echo "$(YELLOW)취소됨$(RESET)"; \

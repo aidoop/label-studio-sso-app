@@ -177,7 +177,7 @@ services:
       # ----------------------------------------------------------------------
 
       # 쿠키 도메인 (서브도메인 간 세션 공유)
-      # 예: .nubison.localhost
+      # 예: .hatiolab.localhost (로컬) / .hatiolab.com (프로덕션)
       SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
       CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
 
@@ -195,7 +195,7 @@ services:
       # ----------------------------------------------------------------------
 
       # CSP frame-ancestors 설정 (간편 모드, 권장)
-      # 예: "'self' https://console.nubison.io"
+      # 예: "'self' https://app.hatiolab.com"
       CSP_FRAME_ANCESTORS: ${CSP_FRAME_ANCESTORS:-}
 
       # 전체 CSP 정책 설정 (고급 모드)
@@ -267,6 +267,15 @@ services:
       # make create-token 명령으로 토큰 생성 후 .env 파일에 설정
       LABEL_STUDIO_API_TOKEN: ${LABEL_STUDIO_API_TOKEN:-YOUR_API_TOKEN_HERE}
 
+      # CORS Settings
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://hatiolab.localhost:3000}
+
+      # Frontend URL (for redirects and CORS)
+      FRONTEND_URL: ${FRONTEND_URL:-http://hatiolab.localhost:3000}
+
+      # Cookie Domain (for subdomain sharing)
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.hatiolab.localhost}
+
     # 볼륨 마운트 (개발 환경: 코드 변경 시 자동 반영)
     volumes:
       - ./backend:/app
@@ -316,7 +325,14 @@ services:
     # 환경변수 설정
     environment:
       # Vite 개발 서버 설정
-      VITE_BACKEND_URL: http://localhost:3001
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-}
+
+      # Label Studio URL (for frontend iframe)
+      VITE_LABEL_STUDIO_URL: ${VITE_LABEL_STUDIO_URL:-http://label.hatiolab.localhost:8080}
+
+      # Vite dev server host and port
+      VITE_DEV_HOST: ${VITE_DEV_HOST:-hatiolab.localhost}
+      VITE_DEV_PORT: ${VITE_DEV_PORT:-3000}
 
     # 볼륨 마운트 (개발 환경: 코드 변경 시 자동 반영)
     volumes:

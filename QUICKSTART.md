@@ -4,20 +4,25 @@
 
 ### 1단계: /etc/hosts 설정
 
+**로컬 개발 환경**:
+
 ```bash
 # macOS/Linux
 sudo nano /etc/hosts
 
 # 다음 2줄 추가:
-127.0.0.1       nubison.localhost
-127.0.0.1       label.nubison.localhost
+127.0.0.1       hatiolab.localhost
+127.0.0.1       label.hatiolab.localhost
 ```
 
 **Windows**: 관리자 권한 메모장으로 `C:\Windows\System32\drivers\etc\hosts` 편집
 
-**자동 설정** (macOS/Linux):
-```bash
-make setup-hosts
+**프로덕션 환경**:
+
+DNS A 레코드 설정:
+```
+app.hatiolab.com     → <서버-IP>
+label.hatiolab.com   → <서버-IP>
 ```
 
 ---
@@ -25,15 +30,42 @@ make setup-hosts
 ### 2단계: 환경 변수 설정
 
 ```bash
-# .env 파일 생성
+# .env 파일 생성 (권장)
 cp .env.example .env
 
-# 또는 최소 설정으로 시작
+# 또는 최소 설정으로 시작 (로컬 개발용)
 cat > .env << EOF
+# 데이터베이스
 POSTGRES_PASSWORD=postgres
-SESSION_COOKIE_DOMAIN=.nubison.localhost
-CSRF_COOKIE_DOMAIN=.nubison.localhost
+
+# Label Studio 쿠키 설정 (서브도메인 간 공유)
+SESSION_COOKIE_DOMAIN=.hatiolab.localhost
+CSRF_COOKIE_DOMAIN=.hatiolab.localhost
+
+# SSO App 설정 (도메인 구성)
+FRONTEND_URL=http://hatiolab.localhost:3000
+COOKIE_DOMAIN=.hatiolab.localhost
+CORS_ORIGIN=http://hatiolab.localhost:3000
+
+# Frontend 설정
+VITE_LABEL_STUDIO_URL=http://label.hatiolab.localhost:8080
 EOF
+```
+
+**프로덕션 환경**:
+
+`.env.example` 파일을 복사한 후 도메인을 hatiolab.com으로 변경:
+
+```bash
+cp .env.example .env
+nano .env
+
+# 다음 변수들을 프로덕션 도메인으로 변경:
+FRONTEND_URL=https://app.hatiolab.com
+COOKIE_DOMAIN=.hatiolab.com
+VITE_LABEL_STUDIO_URL=https://label.hatiolab.com
+SESSION_COOKIE_SECURE=1
+CSRF_COOKIE_SECURE=1
 ```
 
 ---
@@ -73,9 +105,9 @@ make setup
 
 | 이메일 | 비밀번호 | 역할 |
 |--------|----------|------|
-| `admin@nubison.io` | `admin123!` | Admin |
-| `annotator@nubison.io` | `annotator123!` | Annotator |
-| `manager@nubison.io` | `manager123!` | Manager |
+| `admin@hatiolab.com` | `admin123!` | Admin |
+| `annotator@hatiolab.com` | `annotator123!` | Annotator |
+| `manager@hatiolab.com` | `manager123!` | Manager |
 
 #### 4-2. API 토큰 생성
 
@@ -85,7 +117,7 @@ make create-token
 
 **출력 예시**:
 ```
-Token for admin@nubison.io: 1a2b3c4d5e6f7g8h9i0j
+Token for admin@hatiolab.com: 1a2b3c4d5e6f7g8h9i0j
 ```
 
 **.env 파일에 토큰 추가**:
@@ -103,17 +135,33 @@ docker compose restart backend
 ### 5단계: 접속 및 테스트
 
 #### Label Studio 직접 접속
+
+**로컬 개발**:
 ```
-http://label.nubison.localhost:8080
+http://label.hatiolab.localhost:8080
 ```
+
+**프로덕션**:
+```
+https://label.hatiolab.com
+```
+
 - 위에서 생성한 계정으로 로그인
 - 프로젝트 생성 및 작업 추가
 
 #### 테스트 앱 접속
+
+**로컬 개발**:
 ```
-http://nubison.localhost:3000
+http://hatiolab.localhost:3000
 ```
-- 사용자 선택 (admin@nubison.io, annotator@nubison.io, manager@nubison.io)
+
+**프로덕션**:
+```
+https://app.hatiolab.com
+```
+
+- 사용자 선택 (admin@hatiolab.com, annotator@hatiolab.com, manager@hatiolab.com)
 - "Login as Admin" (또는 다른 사용자) 버튼 클릭
 - Label Studio iframe 자동 로드
 
@@ -124,15 +172,15 @@ http://nubison.localhost:3000
 ### 1. SSO 사용자 전환
 
 ```
-1. http://nubison.localhost:3000 접속
-2. "Login as Admin" 버튼 클릭 (admin@nubison.io)
+1. http://hatiolab.localhost:3000 접속 (로컬) 또는 https://app.hatiolab.com (프로덕션)
+2. "Login as Admin" 버튼 클릭 (admin@hatiolab.com)
 3. Label Studio에서 annotation 생성
 4. 브라우저 개발자 도구 → Application → Cookies 확인:
    - ls_auth_token: 초기 로그인 시 생성됨
    - ls_sessionid: 첫 Label Studio 접근 후 생성됨
    - ls_auth_token: ls_sessionid 생성 후 자동 삭제됨
 5. "Logout" 버튼 클릭
-6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
+6. "Login as Annotator" 버튼 클릭 (annotator@hatiolab.com)
 7. iframe이 재생성되고 새로운 사용자로 전환됨 확인
 8. 같은 task 열어서 다른 사용자로 로그인되었는지 확인
 ```
@@ -140,7 +188,7 @@ http://nubison.localhost:3000
 **콘솔 로그 확인**:
 ```
 [SSO Middleware] JWT token found in cookie 'ls_auth_token'
-[SSO Middleware] User auto-logged in via JWT: admin@nubison.io
+[SSO Middleware] User auto-logged in via JWT: admin@hatiolab.com
 [SSO Middleware] JWT → Session: Deleted token cookie 'ls_auth_token'
 ```
 
@@ -148,7 +196,8 @@ http://nubison.localhost:3000
 
 Label Studio iframe에서 헤더가 숨겨진 것을 확인:
 ```
-URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+로컬: http://label.hatiolab.localhost:8080/projects/1?hideHeader=true
+프로덕션: https://label.hatiolab.com/projects/1?hideHeader=true
 ```
 
 ### 3. Annotation Ownership 제어
@@ -236,11 +285,11 @@ docker exec -it label-studio-frontend sh
 
 ```bash
 # 1. /etc/hosts 확인
-cat /etc/hosts | grep nubison
+cat /etc/hosts | grep hatiolab
 
 # 2. 올바른 항목이 있는지 확인
-# 127.0.0.1 nubison.localhost
-# 127.0.0.1 label.nubison.localhost
+# 127.0.0.1 hatiolab.localhost
+# 127.0.0.1 label.hatiolab.localhost
 
 # 3. DNS 캐시 초기화
 # macOS
@@ -301,11 +350,11 @@ docker compose logs -f backend
 docker compose exec labelstudio env | grep COOKIE
 
 # 2. 올바른 값 확인
-# SESSION_COOKIE_DOMAIN=.nubison.localhost
-# CSRF_COOKIE_DOMAIN=.nubison.localhost
+# SESSION_COOKIE_DOMAIN=.hatiolab.localhost (로컬) / .hatiolab.com (프로덕션)
+# CSRF_COOKIE_DOMAIN=.hatiolab.localhost (로컬) / .hatiolab.com (프로덕션)
 
 # 3. 브라우저 개발자 도구에서 쿠키 확인
-# F12 → Application → Cookies → .nubison.localhost
+# F12 → Application → Cookies → .hatiolab.localhost (로컬) / .hatiolab.com (프로덕션)
 # 초기: ls_auth_token 쿠키 확인
 # 이후: ls_sessionid 쿠키 확인 (ls_auth_token은 자동 삭제됨)
 
@@ -365,12 +414,22 @@ docker exec label-studio-app ls -la /label-studio/label_studio/templates/base.ht
 
 ## 📊 서비스 URL 정리
 
+**로컬 개발 환경**:
+
 | 서비스 | URL | 용도 |
 |--------|-----|------|
-| Frontend | http://nubison.localhost:3000 | 테스트 앱 |
-| Backend | http://nubison.localhost:3001 | SSO API |
-| Label Studio | http://label.nubison.localhost:8080 | Label Studio |
+| Frontend | http://hatiolab.localhost:3000 | 테스트 앱 |
+| Backend | http://hatiolab.localhost:3001 | SSO API |
+| Label Studio | http://label.hatiolab.localhost:8080 | Label Studio |
 | PostgreSQL | localhost:5432 | 데이터베이스 |
+
+**프로덕션 환경**:
+
+| 서비스 | URL | 용도 |
+|--------|-----|------|
+| Frontend | https://app.hatiolab.com | 테스트 앱 |
+| Backend | https://app.hatiolab.com/api | SSO API |
+| Label Studio | https://label.hatiolab.com | Label Studio |
 
 ---
 

@@ -93,6 +93,8 @@ docker compose -f docker-compose.dev.yml down
 
 `.env` 파일에 다음 환경변수를 설정하세요:
 
+**로컬 개발 환경** (hatiolab.localhost):
+
 ```bash
 # PostgreSQL
 POSTGRES_DB=labelstudio
@@ -100,18 +102,60 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your-secure-password
 
 # Label Studio
-LABEL_STUDIO_HOST=http://localhost:8080
+LABEL_STUDIO_HOST=http://label.hatiolab.localhost:8080
 DEBUG=false
 LOG_LEVEL=INFO
 
-# SSO App
-LABEL_STUDIO_API_TOKEN=your-api-token-here
-CORS_ORIGIN=*
+# Label Studio 쿠키 설정 (서브도메인 간 공유)
+SESSION_COOKIE_DOMAIN=.hatiolab.localhost
+CSRF_COOKIE_DOMAIN=.hatiolab.localhost
+SESSION_COOKIE_SECURE=0
+CSRF_COOKIE_SECURE=0
 
-# 쿠키 설정 (선택사항)
-SESSION_COOKIE_DOMAIN=
-CSRF_COOKIE_DOMAIN=
+# SSO App - 도메인 설정
+FRONTEND_URL=http://hatiolab.localhost:3000
+COOKIE_DOMAIN=.hatiolab.localhost
+CORS_ORIGIN=http://hatiolab.localhost:3000
+
+# SSO App - API
+LABEL_STUDIO_API_TOKEN=your-api-token-here
+
+# Frontend
+VITE_LABEL_STUDIO_URL=http://label.hatiolab.localhost:8080
 ```
+
+**프로덕션 환경** (예: hatiolab.com):
+
+```bash
+# PostgreSQL
+POSTGRES_DB=labelstudio_prod
+POSTGRES_USER=labelstudio
+POSTGRES_PASSWORD=<strong-password>
+
+# Label Studio
+LABEL_STUDIO_HOST=https://label.hatiolab.com
+DEBUG=false
+LOG_LEVEL=WARNING
+
+# Label Studio 쿠키 설정 (HTTPS 필수)
+SESSION_COOKIE_DOMAIN=.hatiolab.com
+CSRF_COOKIE_DOMAIN=.hatiolab.com
+SESSION_COOKIE_SECURE=1
+CSRF_COOKIE_SECURE=1
+
+# SSO App - 도메인 설정
+FRONTEND_URL=https://app.hatiolab.com
+COOKIE_DOMAIN=.hatiolab.com
+CORS_ORIGIN=https://app.hatiolab.com
+
+# SSO App - API
+LABEL_STUDIO_API_TOKEN=<production-api-token>
+
+# Frontend
+VITE_LABEL_STUDIO_URL=https://label.hatiolab.com
+```
+
+> **중요**: v1.0.3+ 부터 모든 도메인 관련 하드코딩이 제거되었습니다. 환경변수를 통해 유연하게 도메인을 설정할 수 있습니다.
 
 ---
 
@@ -293,7 +337,7 @@ open https://label-app.hatiolab.com
 
 | 변수 | 설명 | 예시 | 기본값 |
 |------|------|------|--------|
-| `CORS_ORIGIN` | CORS 허용 도메인 | `https://console.yourdomain.com` | `http://nubison.localhost:3000` |
+| `CORS_ORIGIN` | CORS 허용 도메인 | `https://app.hatiolab.com` | `http://hatiolab.localhost:3000` |
 
 ### Kubernetes 환경 변수 설정
 

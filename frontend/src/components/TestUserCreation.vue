@@ -15,7 +15,7 @@
             id="email"
             v-model="newUser.email"
             type="email"
-            placeholder="test_user_001@nubison.io"
+            placeholder="test_user_001@hatiolab.com"
             required
           />
         </div>

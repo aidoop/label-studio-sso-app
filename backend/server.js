@@ -13,7 +13,9 @@ const app = express();
 // 환경 변수 설정
 const NODE_ENV = process.env.NODE_ENV || "development";
 const PORT = parseInt(process.env.PORT || (NODE_ENV === "production" ? "3000" : "3001"));
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://nubison.localhost:3000";
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://hatiolab.localhost:3000";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://hatiolab.localhost:3000";
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || ".hatiolab.localhost";
 
 // Label Studio 설정 (환경변수로 관리 권장)
 const LABEL_STUDIO_URL = process.env.LABEL_STUDIO_URL || "http://labelstudio:8080";
@@ -23,6 +25,8 @@ const LABEL_STUDIO_API_TOKEN = process.env.LABEL_STUDIO_API_TOKEN || "YOUR_API_T
 console.log(`[Config] NODE_ENV: ${NODE_ENV}`);
 console.log(`[Config] PORT: ${PORT}`);
 console.log(`[Config] CORS_ORIGIN: ${CORS_ORIGIN}`);
+console.log(`[Config] FRONTEND_URL: ${FRONTEND_URL}`);
+console.log(`[Config] COOKIE_DOMAIN: ${COOKIE_DOMAIN}`);
 console.log(`[Config] LABEL_STUDIO_URL: ${LABEL_STUDIO_URL}`);
 console.log(`[Config] LABEL_STUDIO_API_TOKEN: ${LABEL_STUDIO_API_TOKEN ? LABEL_STUDIO_API_TOKEN.substring(0, 10) + '...' : 'NOT SET'}`);
 
@@ -166,7 +170,7 @@ async function issueJWT(email) {
  */
 function setJWTCookie(res, token, expiresIn) {
   res.cookie("ls_auth_token", token, {
-    domain: ".nubison.localhost",
+    domain: COOKIE_DOMAIN,
     path: "/",
     httpOnly: false, // 디버깅을 위해 false (프로덕션에서는 true 권장)
     sameSite: "lax",
@@ -179,13 +183,13 @@ function setJWTCookie(res, token, expiresIn) {
  */
 function clearSessionCookies(res) {
   res.clearCookie("ls_sessionid", {
-    domain: ".nubison.localhost",
+    domain: COOKIE_DOMAIN,
     path: "/",
     httpOnly: true,
     sameSite: "lax",
   });
   res.clearCookie("ls_csrftoken", {
-    domain: ".nubison.localhost",
+    domain: COOKIE_DOMAIN,
     path: "/",
     sameSite: "lax",
   });
@@ -212,7 +216,7 @@ app.get("/api/sso/invalid-token", async (req, res) => {
     const invalidToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid_payload_here.invalid_signature";
 
     res.cookie("ls_auth_token", invalidToken, {
-      domain: ".nubison.localhost",
+      domain: COOKIE_DOMAIN,
       path: "/",
       httpOnly: false,
       sameSite: "lax",
@@ -247,7 +251,7 @@ app.get("/api/sso/token", async (req, res) => {
     console.log("[SSO Token] Issuing JWT token...");
 
     // Query parameter로 사용자 선택
-    const userEmail = req.query.email || "admin@nubison.io";
+    const userEmail = req.query.email || "admin@hatiolab.com";
 
     console.log(`[SSO Token] User: ${userEmail}`);
 
@@ -631,7 +635,7 @@ app.get("/api/webhooks/stream", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  res.setHeader("Access-Control-Allow-Origin", "http://nubison.localhost:3000");
+  res.setHeader("Access-Control-Allow-Origin", FRONTEND_URL);
   res.setHeader("Access-Control-Allow-Credentials", "true");
 
   // 클라이언트 등록
@@ -851,7 +855,7 @@ app.post("/api/test/create-user", async (req, res) => {
       if (tokenResponse.ok && tokenData.token) {
         try {
           // 메인 페이지로 이동 (프로젝트 리스트 표시)
-          const loginUrl = `http://nubison.localhost:3000/?user=${encodeURIComponent(email)}`;
+          const loginUrl = `${FRONTEND_URL}/?user=${encodeURIComponent(email)}`;
 
           // 실제 로그인은 브라우저에서 수행해야 하므로 URL만 제공
           result.steps.ssoLogin = {

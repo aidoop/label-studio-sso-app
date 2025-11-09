@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2025-11-09
+
+### Changed
+
+#### 도메인 하드코딩 제거 - 환경변수로 전환
+- **주요 변경 사항**:
+  - 모든 `nubison.localhost` 하드코딩 제거
+  - 환경변수 기반 도메인 설정으로 변경
+  - 프로덕션 배포 유연성 향상 (예: hatiolab.com)
+
+#### Backend (server.js)
+- **새로운 환경변수**:
+  - `FRONTEND_URL`: SSO 앱 프론트엔드 URL (기본값: `http://hatiolab.localhost:3000`)
+  - `COOKIE_DOMAIN`: 쿠키 공유 도메인 (기본값: `.hatiolab.localhost`)
+- **변경된 함수**:
+  - `setJWTCookie()`: COOKIE_DOMAIN 환경변수 사용
+  - `clearSessionCookies()`: COOKIE_DOMAIN 환경변수 사용
+  - SSE 스트림 CORS 헤더: FRONTEND_URL 환경변수 사용
+  - 로그인 리다이렉트 URL: FRONTEND_URL 환경변수 사용
+
+#### Frontend
+- **새로운 환경변수**:
+  - `VITE_LABEL_STUDIO_URL`: Label Studio URL (기본값: `http://label.hatiolab.localhost:8080`)
+  - `VITE_DEV_HOST`: Vite 개발 서버 호스트 (기본값: `hatiolab.localhost`)
+  - `VITE_DEV_PORT`: Vite 개발 서버 포트 (기본값: `3000`)
+- **변경된 파일**:
+  - `LabelStudioWrapper.vue`: VITE_LABEL_STUDIO_URL 사용
+  - `ProjectAPITest.vue`: VITE_LABEL_STUDIO_URL 사용
+  - `vite.config.js`: VITE_DEV_HOST, VITE_BACKEND_URL 사용
+
+#### Configuration
+- **`.env.example`**:
+  - 새로운 환경변수 문서화
+  - 로컬 개발(hatiolab.localhost) 및 프로덕션(hatiolab.com) 예시 추가
+- **`docker-compose.yml`**:
+  - FRONTEND_URL, COOKIE_DOMAIN 환경변수 추가
+- **`docker-compose.dev.yml`**:
+  - Backend: CORS_ORIGIN, FRONTEND_URL, COOKIE_DOMAIN 추가
+  - Frontend: VITE_LABEL_STUDIO_URL, VITE_DEV_HOST, VITE_DEV_PORT 추가
+
+#### Documentation
+- **README.md**:
+  - 환경변수 섹션 추가 (로컬/프로덕션 예시)
+  - 프로덕션 배포 가이드 확장 (hatiolab.com 예시)
+  - Nginx 설정 예시 추가
+- **QUICKSTART.md**:
+  - 환경변수 설정 단계 업데이트
+- **DEPLOYMENT.md**:
+  - 환경변수 설정 가이드 추가 (로컬/프로덕션)
+
+### Benefits
+- ✅ 코드 수정 없이 도메인 변경 가능
+- ✅ 다중 환경 배포 간소화 (개발/스테이징/프로덕션)
+- ✅ Docker 이미지 재사용성 향상
+- ✅ 보안 강화 (도메인별 쿠키 격리)
+
 ## [1.2.4] - 2025-11-07
 
 ### Changed

@@ -93,6 +93,8 @@ services:
       CSRF_COOKIE_DOMAIN: ${CSRF_COOKIE_DOMAIN}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
       CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-0}
+      SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-}
+      CSRF_COOKIE_SAMESITE: ${CSRF_COOKIE_SAMESITE:-}
 
       # Security Headers
       CSP_FRAME_ANCESTORS: ${CSP_FRAME_ANCESTORS:-}
@@ -124,7 +126,7 @@ services:
   # ==============================================================================
   sso-app:
     # GitHub Container Registry 배포 이미지
-    image: ghcr.io/aidoop/label-studio-sso-app:1.0.2
+    image: ghcr.io/aidoop/label-studio-sso-app:1.0.6
 
     # 또는 latest 태그 사용
     # image: ghcr.io/aidoop/label-studio-sso-app:latest
@@ -145,6 +147,12 @@ services:
 
       # CORS Settings
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+
+      # Frontend URL (for redirects and CORS)
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+
+      # Cookie Domain (for subdomain sharing)
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.localhost}
 
       # Label Studio Configuration
       LABEL_STUDIO_URL: http://labelstudio:8080

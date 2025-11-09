@@ -14,7 +14,7 @@
 #   ./test-sso.sh <API_TOKEN> <USER_EMAIL>
 #
 # 예시:
-#   ./test-sso.sh abc123def456 admin@nubison.io
+#   ./test-sso.sh abc123def456 admin@hatiolab.com
 #
 # ==============================================================================
 
@@ -30,9 +30,9 @@ NC='\033[0m' # No Color
 # 설정
 # ==============================================================================
 
-LABEL_STUDIO_URL="${LABEL_STUDIO_URL:-http://label.nubison.localhost:8080}"
+LABEL_STUDIO_URL="${LABEL_STUDIO_URL:-http://label.hatiolab.localhost:8080}"
 API_TOKEN="${1}"
-USER_EMAIL="${2:-admin@nubison.io}"
+USER_EMAIL="${2:-admin@hatiolab.com}"
 
 # ==============================================================================
 # 헬퍼 함수
@@ -72,7 +72,7 @@ if [ -z "$API_TOKEN" ]; then
     echo "  make create-token"
     echo ""
     echo "또는:"
-    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@nubison.io"
+    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@hatiolab.com"
     echo ""
     exit 1
 fi
@@ -200,7 +200,7 @@ elif [ "$HTTP_CODE" -eq 401 ]; then
     echo "  2. Account Settings → Access Token 확인"
     echo "  또는"
     echo "  make create-token"
-    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@nubison.io"
+    echo "  docker compose exec labelstudio python /label-studio/label_studio/manage.py drf_create_token admin@hatiolab.com"
     exit 1
 
 elif [ "$HTTP_CODE" -eq 404 ]; then
@@ -226,7 +226,7 @@ print_section "테스트 완료"
 echo "다음 단계:"
 echo "  1. 위의 JWT 토큰을 사용하여 외부 앱에서 Label Studio 인증"
 echo "  2. 쿠키 방식 (권장): ls_auth_token 쿠키에 JWT 설정"
-echo "  3. 일반 사용: Backend API (http://nubison.localhost:3001/api/sso/token)를 통해 인증"
+echo "  3. 일반 사용: Backend API (http://hatiolab.localhost:3001/api/sso/token)를 통해 인증"
 echo "  4. JWT → Django Session 전환: Label Studio 접근 시 자동 세션 생성"
 echo ""
 echo "자세한 사용 방법:"

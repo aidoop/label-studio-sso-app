@@ -95,12 +95,22 @@ $ curl http://localhost:3001/api/webhooks/stats
 
 ## 🌐 접속 URL
 
+**로컬 개발 환경**:
+
 | 서비스 | URL | 상태 |
 |--------|-----|------|
-| **Frontend** (Vue 3) | http://nubison.localhost:3000 | ✅ 실행 중 |
+| **Frontend** (Vue 3) | http://hatiolab.localhost:3000 | ✅ 실행 중 |
 | **Backend** (Express.js) | http://localhost:3001 | ✅ 실행 중 |
-| **Label Studio** | http://label.nubison.localhost:8080 | ✅ 실행 중 |
+| **Label Studio** | http://label.hatiolab.localhost:8080 | ✅ 실행 중 |
 | **PostgreSQL** | localhost:5432 | ✅ 실행 중 |
+
+**프로덕션 환경**:
+
+| 서비스 | URL | 상태 |
+|--------|-----|------|
+| **Frontend** (Vue 3) | https://app.hatiolab.com | - |
+| **Backend** (Express.js) | https://app.hatiolab.com/api | - |
+| **Label Studio** | https://label.hatiolab.com | - |
 
 ---
 
@@ -110,16 +120,16 @@ $ curl http://localhost:3001/api/webhooks/stats
 
 ```bash
 # Frontend 접속
-open http://nubison.localhost:3000
+open http://hatiolab.localhost:3000
 
 # 또는 브라우저에서 직접 접속
 ```
 
 ### 2. 로그인
 
-- "Login as Admin" → `admin@nubison.io`
-- "Login as Annotator" → `annotator@nubison.io`
-- "Login as Manager" → `manager@nubison.io`
+- "Login as Admin" → `admin@hatiolab.com`
+- "Login as Annotator" → `annotator@hatiolab.com`
+- "Login as Manager" → `manager@hatiolab.com`
 
 ### 3. Webhook Monitor 확인
 
@@ -134,7 +144,7 @@ open http://nubison.localhost:3000
 cat .env | grep LABEL_STUDIO_API_TOKEN
 
 # Webhook 등록
-curl -X POST http://label.nubison.localhost:8080/api/webhooks \
+curl -X POST http://label.hatiolab.localhost:8080/api/webhooks \
   -H "Authorization: Token YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -158,8 +168,8 @@ curl -X POST http://label.nubison.localhost:8080/api/webhooks \
 
 ## 🧪 테스트 체크리스트
 
-- [ ] Frontend 접속 가능 (http://nubison.localhost:3000)
-- [ ] Label Studio 접속 가능 (http://label.nubison.localhost:8080)
+- [ ] Frontend 접속 가능 (http://hatiolab.localhost:3000)
+- [ ] Label Studio 접속 가능 (http://label.hatiolab.localhost:8080)
 - [ ] SSO 로그인 성공 (Admin, Annotator, Manager)
 - [ ] Webhook Monitor 탭 표시됨
 - [ ] SSE 연결 "Connected" 상태
@@ -281,7 +291,7 @@ docker compose logs labelstudio | grep webhook
 
 # 3. Webhook 등록 확인
 curl -H "Authorization: Token YOUR_TOKEN" \
-  http://label.nubison.localhost:8080/api/webhooks
+  http://label.hatiolab.localhost:8080/api/webhooks
 ```
 
 ### 문제 2: Frontend가 접속되지 않음

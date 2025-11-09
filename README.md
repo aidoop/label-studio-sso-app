@@ -74,19 +74,22 @@ Docker Compose 환경:
 
 ### 1. 호스트 설정
 
-```bash
-# /etc/hosts 파일에 다음 추가 (자동)
-make setup-hosts
-```
-
-또는 수동으로:
+**로컬 개발 환경 (테스트용)**:
 
 ```bash
 sudo nano /etc/hosts
 
 # 다음 라인 추가: (.localhost 로 끝나는 도메인이름인 경우는 꼭 추가하지 않아도 됨)
-127.0.0.1 nubison.localhost
-127.0.0.1 label.nubison.localhost
+127.0.0.1 hatiolab.localhost
+127.0.0.1 label.hatiolab.localhost
+```
+
+**프로덕션 환경**:
+
+DNS A 레코드 설정:
+```
+app.hatiolab.com     → <서버-IP>
+label.hatiolab.com   → <서버-IP>
 ```
 
 ### 2. 환경 변수 설정
@@ -96,7 +99,44 @@ sudo nano /etc/hosts
 cp .env.example .env
 
 # .env 파일 편집 (필요시)
+# nano .env
 ```
+
+**주요 환경변수** (로컬 개발 환경 - hatiolab.localhost):
+
+```bash
+# SSO App 도메인 설정
+FRONTEND_URL=http://hatiolab.localhost:3000      # SSO 앱 프론트엔드 URL
+COOKIE_DOMAIN=.hatiolab.localhost                # 쿠키 공유 도메인
+CORS_ORIGIN=http://hatiolab.localhost:3000       # CORS 허용 도메인
+
+# Label Studio URL
+VITE_LABEL_STUDIO_URL=http://label.hatiolab.localhost:8080
+
+# Label Studio API Token (초기 설정 후 발급)
+LABEL_STUDIO_API_TOKEN=YOUR_API_TOKEN_HERE
+```
+
+**프로덕션 환경 예시** (hatiolab.com):
+
+```bash
+# SSO App 도메인 설정
+FRONTEND_URL=https://app.hatiolab.com           # SSO 앱 프론트엔드 URL
+COOKIE_DOMAIN=.hatiolab.com                      # 쿠키 공유 도메인
+CORS_ORIGIN=https://app.hatiolab.com             # CORS 허용 도메인
+
+# Label Studio URL
+VITE_LABEL_STUDIO_URL=https://label.hatiolab.com
+
+# Cookie Secure 플래그 (HTTPS 필수)
+SESSION_COOKIE_SECURE=true
+CSRF_COOKIE_SECURE=true
+
+# Label Studio API Token
+LABEL_STUDIO_API_TOKEN=<production-token>
+```
+
+> **중요**: 모든 도메인 관련 하드코딩이 환경변수로 대체되었습니다. 로컬 개발 시에는 hatiolab.localhost를 사용하고, 프로덕션에서는 hatiolab.com으로 `.env` 파일을 통해 설정합니다.
 
 ### 3. Label Studio Custom Image 준비
 
@@ -174,9 +214,9 @@ make setup
 
 | 이메일 | 비밀번호 | 역할 |
 |--------|----------|------|
-| `admin@nubison.io` | `admin123!` | Admin |
-| `annotator@nubison.io` | `annotator123!` | Annotator |
-| `manager@nubison.io` | `manager123!` | Manager |
+| `admin@hatiolab.com` | `admin123!` | Admin |
+| `annotator@hatiolab.com` | `annotator123!` | Annotator |
+| `manager@hatiolab.com` | `manager123!` | Manager |
 
 ### 6. API 토큰 생성
 
@@ -195,8 +235,13 @@ docker compose restart backend
 
 브라우저에서 다음 URL 접속:
 
-- **Frontend**: http://nubison.localhost:3000
-- **Label Studio**: http://label.nubison.localhost:8080
+**로컬 개발 환경**:
+- **Frontend**: http://hatiolab.localhost:3000
+- **Label Studio**: http://label.hatiolab.localhost:8080
+
+**프로덕션 환경**:
+- **Frontend**: https://app.hatiolab.com
+- **Label Studio**: https://label.hatiolab.com
 
 ## 아키텍처
 
@@ -222,7 +267,7 @@ docker compose restart backend
 │  │  • hideHeader 기능                         │            │
 │  │  • Annotation 소유권 제어                  │            │
 │  │                                             │            │
-│  │     :8080 (label.nubison.localhost)       │            │
+│  │     :8080 (label.hatiolab.localhost)      │            │
 │  └─────────────────────────────────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -232,11 +277,11 @@ docker compose restart backend
 ```
 Frontend (Vue 3)
     ↓
-    사용자 선택 (admin@nubison.io, annotator@nubison.io, manager@nubison.io)
+    사용자 선택 (admin@hatiolab.com, annotator@hatiolab.com, manager@hatiolab.com)
     ↓
 Backend (Express.js)
     ↓
-    GET /api/sso/token?email=admin@nubison.io
+    GET /api/sso/token?email=admin@hatiolab.com
     - Label Studio API로 JWT 토큰 요청
     - 기존 세션 쿠키 삭제 (ls_sessionid, ls_csrftoken)
     ↓
@@ -248,13 +293,14 @@ Label Studio API
 Backend
     ↓
     쿠키 설정 (ls_auth_token)
-    domain: .nubison.localhost
+    domain: .hatiolab.localhost (로컬) 또는 .hatiolab.com (프로덕션)
     httpOnly: false (디버깅용)
     ↓
 Frontend
     ↓
     iframe 로드
-    src: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+    src: http://label.hatiolab.localhost:8080/projects/1?hideHeader=true (로컬)
+    src: https://label.hatiolab.com/projects/1?hideHeader=true (프로덕션)
     key: email (사용자 변경 시 iframe 재생성)
     ↓
 Label Studio Custom (label-studio-sso 미들웨어)
@@ -303,7 +349,7 @@ def process_response(self, request, response):
         response.delete_cookie(
             cookie_name,  # ls_auth_token
             path="/",
-            domain=settings.SESSION_COOKIE_DOMAIN  # .nubison.localhost
+            domain=settings.SESSION_COOKIE_DOMAIN  # .hatiolab.localhost (로컬) 또는 .hatiolab.com (프로덕션)
         )
 ```
 
@@ -337,11 +383,11 @@ def process_response(self, request, response):
 function clearSessionCookies(res) {
   // 사용자 전환 시 기존 Label Studio 세션 쿠키 삭제
   res.clearCookie('ls_sessionid', {
-    domain: '.nubison.localhost',
+    domain: COOKIE_DOMAIN,  // .hatiolab.localhost (로컬) 또는 .hatiolab.com (프로덕션)
     path: '/'
   });
   res.clearCookie('ls_csrftoken', {
-    domain: '.nubison.localhost',
+    domain: COOKIE_DOMAIN,  // 환경변수로 설정
     path: '/'
   });
 }
@@ -361,19 +407,20 @@ function clearSessionCookies(res) {
 ### 1. SSO 사용자 전환
 
 ```
-1. http://nubison.localhost:3000 접속
-2. "Login as Admin" 버튼 클릭 (admin@nubison.io)
+1. http://hatiolab.localhost:3000 접속 (로컬 개발)
+   또는 https://app.hatiolab.com 접속 (프로덕션)
+2. "Login as Admin" 버튼 클릭 (admin@hatiolab.com)
 3. Label Studio에서 프로젝트 선택 및 annotation 생성
 4. 브라우저 개발자 도구 → Application → Cookies 확인:
    - ls_auth_token: 초기 로그인 시 생성됨
    - ls_sessionid: 첫 Label Studio 접근 후 생성됨
    - ls_auth_token: ls_sessionid 생성 후 자동 삭제됨
 5. "Logout" 버튼 클릭
-6. "Login as Annotator" 버튼 클릭 (annotator@nubison.io)
+6. "Login as Annotator" 버튼 클릭 (annotator@hatiolab.com)
 7. iframe이 재생성되고 새로운 사용자로 전환됨 확인
 8. 브라우저 콘솔에서 SSO 인증 로그 확인:
    [SSO Middleware] JWT token found in cookie 'ls_auth_token'
-   [SSO Middleware] User auto-logged in via JWT: annotator@nubison.io
+   [SSO Middleware] User auto-logged in via JWT: annotator@hatiolab.com
    [SSO Middleware] JWT → Session: Deleted token cookie 'ls_auth_token'
 ```
 
@@ -382,7 +429,8 @@ function clearSessionCookies(res) {
 Label Studio iframe에서 헤더가 숨겨진 것을 확인:
 
 ```
-URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
+로컬: http://label.hatiolab.localhost:8080/projects/1?hideHeader=true
+프로덕션: https://label.hatiolab.com/projects/1?hideHeader=true
 ```
 
 ### 3. Annotation Ownership 제어
@@ -407,11 +455,29 @@ URL: http://label.nubison.localhost:8080/projects/1?hideHeader=true
 cat .env | grep LABEL_STUDIO_API_TOKEN
 
 # Webhook 등록 (curl 사용)
-curl -X POST http://label.nubison.localhost:8080/api/webhooks \
+# 로컬 개발 환경
+curl -X POST http://label.hatiolab.localhost:8080/api/webhooks \
   -H "Authorization: Token YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "url": "http://backend:3001/api/webhooks/annotation",
+    "organization": 1,
+    "project": 1,
+    "active": true,
+    "send_payload": true,
+    "actions": [
+      "ANNOTATION_CREATED",
+      "ANNOTATION_UPDATED",
+      "ANNOTATIONS_DELETED"
+    ]
+  }'
+
+# 프로덕션 환경
+curl -X POST https://label.hatiolab.com/api/webhooks \
+  -H "Authorization: Token YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://app.hatiolab.com/api/webhooks/annotation",
     "organization": 1,
     "project": 1,
     "active": true,
@@ -431,7 +497,9 @@ curl -X POST http://label.nubison.localhost:8080/api/webhooks \
 
 #### Webhook Monitor 사용
 
-1. **접속**: http://nubison.localhost:3000에 로그인 후 "🔔 Webhook Monitor" 탭 클릭
+1. **접속**:
+   - 로컬: http://hatiolab.localhost:3000 로그인 후 "🔔 Webhook Monitor" 탭 클릭
+   - 프로덕션: https://app.hatiolab.com 로그인 후 "🔔 Webhook Monitor" 탭 클릭
 
 2. **실시간 모니터링**:
    - SSE (Server-Sent Events)로 실시간 이벤트 자동 표시
@@ -458,7 +526,7 @@ curl -X POST http://label.nubison.localhost:8080/api/webhooks \
        "id": 17,
        "completed_by_info": {
          "id": 1,
-         "email": "annotator@nubison.io",
+         "email": "annotator@hatiolab.com",
          "username": "annotator1",
          "is_superuser": false
        }
@@ -487,7 +555,7 @@ docker compose logs -f backend
 ============================================================
 Action: ANNOTATION_CREATED
 User Info:
-  - Email: annotator@nubison.io
+  - Email: annotator@hatiolab.com
   - Username: annotator1
   - Is Superuser: false
   ✅ PROCESSED: Regular user annotation
@@ -656,9 +724,9 @@ npm run dev
 ```javascript
 // 허용된 사용자 목록
 const allowedUsers = [
-  "admin@nubison.io",
-  "annotator@nubison.io",
-  "manager@nubison.io"
+  "admin@hatiolab.com",
+  "annotator@hatiolab.com",
+  "manager@hatiolab.com"
 ];
 ```
 
@@ -748,7 +816,8 @@ docker build -t label-studio-custom:local .
 # Cmd + Shift + R (Mac) 또는 Ctrl + Shift + R (Windows)
 
 # 2. URL에 hideHeader 파라미터 확인
-# http://label.nubison.localhost:8080/projects/1?hideHeader=true
+# 로컬: http://label.hatiolab.localhost:8080/projects/1?hideHeader=true
+# 프로덕션: https://label.hatiolab.com/projects/1?hideHeader=true
 
 # 3. Custom Image가 최신인지 확인
 docker images | grep label-studio-custom
@@ -758,25 +827,111 @@ docker images | grep label-studio-custom
 
 ### 환경 변수 변경
 
+프로덕션 환경에서는 `.env` 파일에 다음 변수들을 설정합니다:
+
+**예시: hatiolab.com 도메인**
+
 ```bash
-# .env 파일
-LABEL_STUDIO_HOST=https://labelstudio.yourdomain.com
-SESSION_COOKIE_DOMAIN=.yourdomain.com
-CSRF_COOKIE_DOMAIN=.yourdomain.com
-SESSION_COOKIE_SECURE=true
+# ==============================================================================
+# SSO App 설정
+# ==============================================================================
+FRONTEND_URL=https://app.hatiolab.com
+COOKIE_DOMAIN=.hatiolab.com
+CORS_ORIGIN=https://app.hatiolab.com
+
+# ==============================================================================
+# Label Studio 설정
+# ==============================================================================
+# Label Studio 접속 URL
+LABEL_STUDIO_HOST=https://label.hatiolab.com
+VITE_LABEL_STUDIO_URL=https://label.hatiolab.com
+
+# 쿠키 보안 설정 (HTTPS 필수)
+SESSION_COOKIE_DOMAIN=.hatiolab.com
+CSRF_COOKIE_DOMAIN=.hatiolab.com
+SESSION_COOKIE_SECURE=1
+CSRF_COOKIE_SECURE=1
+
+# ==============================================================================
+# API Token
+# ==============================================================================
+LABEL_STUDIO_API_TOKEN=<production-api-token>
+
+# ==============================================================================
+# 데이터베이스
+# ==============================================================================
+POSTGRES_DB=labelstudio_prod
+POSTGRES_USER=labelstudio
+POSTGRES_PASSWORD=<strong-password>
 ```
 
 ### DNS 설정
 
+**도메인 구조** (hatiolab.com 예시):
+
 ```
-app.yourdomain.com         → Frontend
-api.yourdomain.com         → Backend
-labelstudio.yourdomain.com → Label Studio
+app.hatiolab.com           → SSO App Frontend (포트 3000)
+label.hatiolab.com         → Label Studio (포트 8080)
+```
+
+**A 레코드 설정**:
+```
+app.hatiolab.com           → <서버-IP>
+label.hatiolab.com         → <서버-IP>
 ```
 
 ### HTTPS 설정
 
-Nginx 또는 Traefik reverse proxy 사용 권장
+Nginx 또는 Traefik reverse proxy 사용 권장:
+
+**Nginx 설정 예시**:
+
+```nginx
+# app.hatiolab.com (SSO App)
+server {
+    listen 443 ssl http2;
+    server_name app.hatiolab.com;
+
+    ssl_certificate /etc/letsencrypt/live/app.hatiolab.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.hatiolab.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# label.hatiolab.com (Label Studio)
+server {
+    listen 443 ssl http2;
+    server_name label.hatiolab.com;
+
+    ssl_certificate /etc/letsencrypt/live/label.hatiolab.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/label.hatiolab.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+### 배포 체크리스트
+
+- [ ] DNS A 레코드 설정 완료
+- [ ] SSL/TLS 인증서 발급 (Let's Encrypt 권장)
+- [ ] `.env` 파일 환경변수 설정 완료
+- [ ] `SESSION_COOKIE_SECURE=1` 및 `CSRF_COOKIE_SECURE=1` 설정
+- [ ] 강력한 데이터베이스 비밀번호 설정
+- [ ] Label Studio API 토큰 발급 및 설정
+- [ ] 방화벽 규칙 설정 (포트 80, 443만 개방)
+- [ ] 정기 백업 설정 (PostgreSQL 볼륨)
 
 ## 업그레이드 가이드
 

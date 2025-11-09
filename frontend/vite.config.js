@@ -4,11 +4,11 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   plugins: [vue()],
   server: {
-    host: "nubison.localhost",
-    port: 3000,
+    host: process.env.VITE_DEV_HOST || "hatiolab.localhost",
+    port: parseInt(process.env.VITE_DEV_PORT || "3000"),
     proxy: {
       '/api': {
-        target: 'http://nubison.localhost:3001',
+        target: process.env.VITE_BACKEND_URL || 'http://hatiolab.localhost:3001',
         changeOrigin: true,
       },
     },

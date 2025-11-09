@@ -57,7 +57,7 @@ const iframeUrl = ref("");
 const iframeLoaded = ref(false);
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
-const LABEL_STUDIO_URL = "http://label.nubison.localhost:8080";
+const LABEL_STUDIO_URL = import.meta.env.VITE_LABEL_STUDIO_URL || "http://label.hatiolab.localhost:8080";
 
 async function initialize() {
   try {

@@ -19,9 +19,9 @@ docker compose ps
 
 ### 2. Label Studio 접속
 
-브라우저에서 http://label.nubison.localhost:8080 접속 후:
+브라우저에서 http://label.hatiolab.localhost:8080 접속 후:
 
-1. Admin 계정으로 로그인: `admin@nubison.io`
+1. Admin 계정으로 로그인: `admin@hatiolab.com`
 2. 프로젝트 생성 또는 기존 프로젝트 사용
 
 ### 3. API 토큰 확인
@@ -32,7 +32,7 @@ cat .env | grep LABEL_STUDIO_API_TOKEN
 
 # 또는 새로 생성
 docker compose exec labelstudio \
-  python /label-studio/label_studio/manage.py drf_create_token admin@nubison.io
+  python /label-studio/label_studio/manage.py drf_create_token admin@hatiolab.com
 ```
 
 ---
@@ -41,10 +41,12 @@ docker compose exec labelstudio \
 
 ### 방법 A: curl 사용 (권장)
 
+**로컬 개발 환경**:
+
 ```bash
 # 환경 변수 설정
 export LS_TOKEN="your_api_token_here"
-export LS_URL="http://label.nubison.localhost:8080"
+export LS_URL="http://label.hatiolab.localhost:8080"
 
 # Webhook 등록
 curl -X POST "${LS_URL}/api/webhooks" \
@@ -101,7 +103,8 @@ curl -X GET "${LS_URL}/api/webhooks" \
 
 ### 1. Frontend 접속
 
-브라우저에서 http://nubison.localhost:3000 접속
+**로컬**: http://hatiolab.localhost:3000
+**프로덕션**: https://app.hatiolab.com
 
 ### 2. 로그인
 
@@ -124,7 +127,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
 1. **Annotator로 로그인**
    ```
    - "Login as Annotator" 클릭
-   - annotator@nubison.io
+   - annotator@hatiolab.com
    ```
 
 2. **프로젝트 선택**
@@ -149,7 +152,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
 **예상 결과:**
 ```
 🟢 ANNOTATION_CREATED  [14:32:15]
-👤 annotator@nubison.io
+👤 annotator@hatiolab.com
 ℹ️  is_superuser: false
 ✅ PROCESSED: Regular user annotation
 ```
@@ -173,7 +176,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
 **예상 결과:**
 ```
 🟢 ANNOTATION_CREATED  [14:35:22]
-👤 admin@nubison.io
+👤 admin@hatiolab.com
 ℹ️  is_superuser: true
 ⚠️ SKIPPED: Admin annotation (not used for model performance)
 ```
@@ -225,7 +228,7 @@ Annotation 생성 시 Backend 콘솔 출력:
 ============================================================
 Action: ANNOTATION_CREATED
 User Info:
-  - Email: annotator@nubison.io
+  - Email: annotator@hatiolab.com
   - Username: annotator1
   - Is Superuser: false
   ✅ PROCESSED: Regular user annotation
@@ -274,7 +277,7 @@ curl http://localhost:3001/api/webhooks/events
         "completed_by": 2,
         "completed_by_info": {
           "id": 2,
-          "email": "annotator@nubison.io",
+          "email": "annotator@hatiolab.com",
           "username": "annotator1",
           "is_superuser": false
         },
@@ -289,7 +292,7 @@ curl http://localhost:3001/api/webhooks/events
     "total": 1,
     "byAction": { "ANNOTATION_CREATED": 1 },
     "bySuperuser": { "superuser": 0, "regular": 1 },
-    "byUser": { "annotator@nubison.io": 1 }
+    "byUser": { "annotator@hatiolab.com": 1 }
   }
 }
 ```
@@ -349,7 +352,7 @@ docker compose logs backend | grep "Full Payload" -A 30
   "annotation": {
     "completed_by_info": {
       "id": 2,
-      "email": "annotator@nubison.io",
+      "email": "annotator@hatiolab.com",
       "username": "annotator1",
       "is_superuser": false
     }

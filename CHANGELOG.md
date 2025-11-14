@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2025-11-14
+
+### Changed
+
+#### Label Studio Custom Image Update
+- **label-studio-custom**: 1.20.0-sso.33 → 1.20.0-sso.34
+- **새로운 기능**:
+  - AIV Prefix for Prediction Model Version
+  - Prediction 조회 시 model_version에 "AIV " 프리픽스 자동 추가
+  - UI 표시: "139 #1" → "AIV 139 #1"
+- **구현 방식**: Backend Serializer Override (display-only)
+- **영향**:
+  - API 응답에만 프리픽스 추가, 데이터베이스는 변경 없음
+  - Export 파일에 프리픽스 포함될 수 있음
+- **파일**: `docker-compose.yml`
+
 ## [1.2.5] - 2025-11-09
 
 ### Changed

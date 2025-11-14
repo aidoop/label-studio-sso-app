@@ -13,7 +13,7 @@
 
 ```
 Docker Compose 환경:
-├── Label Studio Custom Image  → ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32 (GitHub Container Registry)
+├── Label Studio Custom Image  → ghcr.io/aidoop/label-studio-custom:1.20.0-sso.34 (GitHub Container Registry)
 ├── Express.js Backend         → SSO 토큰 관리 + Webhook 수신 (port 3001)
 ├── Vue 3 Frontend             → 사용자 인터페이스 + Webhook Monitor (port 3000)
 └── PostgreSQL 13.18           → 데이터베이스 (port 5432)
@@ -62,6 +62,11 @@ Docker Compose 환경:
   - UI에 커스텀 버전 표시 (v1.20.0-sso.32)
   - release 필드 오버라이드로 UI 하단에 커스텀 버전 표시
   - 엔드포인트: `GET /api/version`
+- ✅ **AIV Prefix for Prediction Model Version** ⭐ **v1.20.0-sso.34**
+  - Prediction 조회 시 model_version에 "AIV " 프리픽스 자동 추가
+  - UI 표시: "139 #1" → "AIV 139 #1"
+  - AI 예측 기반 annotation과 사용자 직접 annotation을 시각적으로 구별
+  - Backend Serializer Override (display-only, 데이터베이스 변경 없음)
 - ✅ **원활한 사용자 전환** - 여러 사용자 계정 간 세션 충돌 없이 전환
 - ✅ **Sentry 비활성화** - 개발 환경에서 외부 에러 추적 중단
 

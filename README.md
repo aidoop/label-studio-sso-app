@@ -1047,6 +1047,38 @@ curl -X POST http://localhost:8080/api/custom/export/ \
 - [label-studio-sso v6.0.7](https://pypi.org/project/label-studio-sso/6.0.7/)
 - [Label Studio GitHub](https://github.com/HumanSignal/label-studio)
 
+## 통합 테스트
+
+label-studio-custom의 모든 커스터마이징 기능을 검증하는 통합 테스트를 제공합니다.
+
+### 테스트 실행
+
+```bash
+# 기존 개발 환경 대상 테스트
+cd tests
+./run-tests.sh
+
+# 독립 테스트 환경으로 실행
+docker compose -f tests/docker-compose.test.yml up -d
+LABEL_STUDIO_URL=http://localhost:8081 ./tests/run-tests.sh
+docker compose -f tests/docker-compose.test.yml down
+```
+
+### 테스트 범위
+
+- ✅ Version API - Custom Version Override
+- ✅ Admin User APIs (List, Create, Promote, Demote)
+- ✅ User CRUD Operations (GET, PATCH, DELETE)
+- ✅ SSO Token Validation
+- ✅ Active Organization Signal
+- ✅ Custom Export API
+- ✅ Security Headers (CSP, X-Frame-Options)
+- ✅ Prediction Model Version AIV Prefix
+- ✅ Media Upload API
+- ✅ Health Check
+
+자세한 내용은 [tests/README.md](tests/README.md)를 참조하세요.
+
 ## 라이선스
 
 MIT License

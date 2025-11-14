@@ -1,0 +1,124 @@
+# ==============================================================================
+# Test Environment Docker Compose Configuration
+# ==============================================================================
+#
+# 통합 테스트를 위한 독립적인 Docker 환경을 제공합니다.
+# 기존 개발/운영 환경과 분리되어 실행됩니다.
+#
+# 사용 방법:
+#   docker compose -f docker-compose.test.yml up -d
+#   ./run-tests.sh
+#   docker compose -f docker-compose.test.yml down
+#
+# ==============================================================================
+
+services:
+  # ==============================================================================
+  # PostgreSQL 테스트 데이터베이스
+  # ==============================================================================
+  postgres-test:
+    image: postgres:13.18
+    container_name: label-studio-postgres-test
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: labelstudio_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+    ports:
+      - "5433:5432"  # Different port to avoid conflict
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - labelstudio-test
+
+  # ==============================================================================
+  # Label Studio Custom (테스트용)
+  # ==============================================================================
+  labelstudio-test:
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.36
+    container_name: label-studio-app-test
+    restart: unless-stopped
+
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+
+    environment:
+      # Database
+      DJANGO_DB: default
+      POSTGRES_HOST: postgres-test
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: labelstudio_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+      # Django
+      DEBUG: "true"
+      LOG_LEVEL: INFO
+
+      # SSO Configuration
+      JWT_SSO_NATIVE_USER_ID_CLAIM: user_id
+      JWT_SSO_COOKIE_NAME: ls_auth_token
+      JWT_SSO_TOKEN_PARAM: token
+      JWT_SSO_COOKIE_PATH: /
+      SSO_TOKEN_EXPIRY: 600
+
+      # Label Studio
+      LABEL_STUDIO_HOST: http://localhost:8081
+
+      # Custom Version
+      CUSTOM_VERSION: "1.20.0-sso.36"
+      CUSTOM_RELEASE_DATE: "2025-11-14"
+
+      # Security (Permissive for testing)
+      SESSION_COOKIE_SECURE: "0"
+      CSRF_COOKIE_SECURE: "0"
+
+      # Other
+      FEATURE_FLAGS_OFFLINE: true
+      STORAGE_PERSISTENCE: true
+
+    volumes:
+      - labelstudio_test_data:/label-studio/data
+
+    ports:
+      - "8081:8080"  # Different port to avoid conflict
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    networks:
+      - labelstudio-test
+
+# ==============================================================================
+# Volumes
+# ==============================================================================
+volumes:
+  postgres_test_data:
+    driver: local
+
+  labelstudio_test_data:
+    driver: local
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  labelstudio-test:
+    driver: bridge

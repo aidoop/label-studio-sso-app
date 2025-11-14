@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2025-11-14
+
+### Added
+
+#### Integration Tests for Label Studio Custom
+- **통합 테스트 시스템 구축**: label-studio-custom의 모든 커스터마이징 기능을 검증하는 자동화된 테스트
+- **테스트 범위** (16개 통과 / 1개 스킵):
+  - ✅ Version API - Custom Version Override
+  - ✅ Admin User APIs (List, Create, Promote, Demote)
+  - ✅ User CRUD Operations (GET, PATCH, DELETE)
+  - ✅ SSO Token Validation
+  - ✅ Active Organization Signal
+  - ✅ Custom Export API
+  - ✅ Security Headers (CSP, X-Frame-Options)
+  - ✅ Prediction Model Version AIV Prefix
+  - ⊘ Media Upload API (skipped)
+  - ✅ Health Check
+
+#### Test Infrastructure
+- **테스트 파일 구조**:
+  - `tests/integration/label-studio-custom.test.js` - 통합 테스트 스위트
+  - `tests/package.json` - Node.js 테스트 설정
+  - `tests/run-tests.sh` - 테스트 실행 스크립트
+  - `tests/docker-compose.test.yml` - 독립 테스트 환경
+  - `tests/README.md` - 테스트 가이드 문서
+
+- **테스트 실행 방법**:
+  ```bash
+  cd tests
+  ./run-tests.sh              # 기본 실행
+  ./run-tests.sh --verbose    # 상세 출력
+  ./run-tests.sh --watch      # Watch 모드
+  ```
+
+- **독립 테스트 환경**:
+  ```bash
+  docker compose -f tests/docker-compose.test.yml up -d
+  LABEL_STUDIO_URL=http://localhost:8081 ./tests/run-tests.sh
+  docker compose -f tests/docker-compose.test.yml down
+  ```
+
+- **기술 스택**:
+  - Node.js 내장 테스트 러너 (Node 18+)
+  - fetch API를 사용한 HTTP 요청
+  - TAP 포맷 출력
+  - 외부 의존성 없음
+
+- **CI/CD 준비**: GitHub Actions 통합 가능
+
+### Changed
+
+#### Documentation Updates
+- **README.md**: 통합 테스트 섹션 추가
+- **tests/README.md**: 상세한 테스트 가이드 작성
+
 ## [1.0.8] - 2025-11-14
 
 ### Changed

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] - 2025-11-14
+
+### Changed
+
+#### Label Studio Custom Image Update
+- **label-studio-custom**: 1.20.0-sso.35 → 1.20.0-sso.36
+- **버그 수정**:
+  - User Deletion API 수정
+  - URL 충돌로 인한 사용자 삭제 불가 문제 해결
+  - DELETE 메서드를 Label Studio 기본 동작과 동일하게 구현
+- **구현 내용**:
+  - 커스텀 User API에 DELETE 메서드 추가
+  - 관리자 전용 권한 체크
+  - HTTP 204 No Content 응답
+- **테스트**:
+  - ✅ GET: 사용자 조회
+  - ✅ PATCH: 이름/이메일 수정
+  - ✅ DELETE: 사용자 삭제
+- **파일**: `docker-compose.yml`
+
 ## [1.0.7] - 2025-11-14
 
 ### Changed

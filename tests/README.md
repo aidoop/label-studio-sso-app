@@ -35,8 +35,9 @@
 - ✅ Content-Security-Policy 헤더 확인
 - ✅ X-Frame-Options 헤더 확인
 
-### 8. Prediction Model Version AIV Prefix
-- ✅ Prediction 조회 시 `model_version`에 "AIV " 프리픽스 추가 확인
+### 8. Prediction Model Version
+- ✅ Prediction 조회 시 `model_version` 필드 정상 반환 확인
+- ⚠️  **참고**: v1.20.0-sso.37부터 AIV Prefix 기능 제거됨
 
 ### 9. Media Upload API
 - ✅ 미디어 업로드 API 접근성 확인

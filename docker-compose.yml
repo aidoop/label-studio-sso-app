@@ -52,7 +52,7 @@ services:
   # ==============================================================================
   labelstudio:
     # GitHub Container Registry 배포 이미지
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.36
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.37
 
     container_name: label-studio-app
     restart: unless-stopped
@@ -85,8 +85,8 @@ services:
       LABEL_STUDIO_HOST: ${LABEL_STUDIO_HOST:-http://localhost:8080}
 
       # Custom Version
-      CUSTOM_VERSION: "1.20.0-sso.36"
-      CUSTOM_RELEASE_DATE: "2025-11-14"
+      CUSTOM_VERSION: "1.20.0-sso.37"
+      CUSTOM_RELEASE_DATE: "2025-11-17"
 
       # Cookie Settings
       SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
@@ -126,7 +126,7 @@ services:
   # ==============================================================================
   sso-app:
     # GitHub Container Registry 배포 이미지
-    image: ghcr.io/aidoop/label-studio-sso-app:1.0.8
+    image: ghcr.io/aidoop/label-studio-sso-app:1.0.9
 
     # 또는 latest 태그 사용
     # image: ghcr.io/aidoop/label-studio-sso-app:latest

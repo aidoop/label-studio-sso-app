@@ -27,9 +27,41 @@
 ### 5. Active Organization Signal
 - ✅ 사용자 생성 시 자동 organization 할당 확인
 
-### 6. Custom Export API
-- ✅ 날짜 필터링을 통한 데이터 내보내기
-- ✅ 프로젝트별 export 지원
+### 6. Custom Export API (60 Tests Total)
+
+#### 6.1 Comprehensive Tests (27 tests)
+- ✅ **검수자(Superuser) Annotation만 반환** - is_superuser=True 확인
+- ✅ **Annotation 없는 Task 제외** - 필수 필터 검증
+- ✅ **임시 저장(Draft) Annotation 제외** - was_cancelled=False 확인
+- ✅ **response_type='count' 기능** - 건수 조회 (페이징 계획용)
+- ✅ **response_type='data' 기능** - 전체 데이터 반환
+- ✅ **날짜 범위 필터링** - search_from, search_to, search_date_field
+- ✅ **모델 버전 필터링** - model_version으로 prediction 필터
+- ✅ **승인자 필터링** - confirm_user_id로 검수자별 필터
+- ✅ **페이징 기능** - page, page_size 지원 (timeout 방지)
+- ✅ **복합 필터** - 여러 필터 동시 적용
+- ✅ **에러 처리** - 유효성 검증 및 에러 메시지
+- ✅ **성능 및 데이터 무결성** - count/data 일관성 확인
+- ✅ **실제 사용 사례** - MLOps 워크플로우 검증
+
+**테스트 데이터**: 20개 tasks (10 valid + 10 invalid scenarios)
+
+#### 6.2 Advanced Tests (33 tests)
+- ✅ **엣지 케이스** - 빈 프로젝트, 경계값 페이지, 최소/최대 page_size
+- ✅ **복잡한 Annotation 시나리오** - 혼합 annotation, 다중 superuser
+- ✅ **다중 Prediction 시나리오** - 3개 모델 버전, null 처리
+- ✅ **날짜 경계값 테스트** - 정확한 경계, 부분 날짜 범위, 역순 날짜
+- ✅ **입력 유효성 검증** - 음수/0 값, 잘못된 형식
+- ✅ **SQL Injection 보안** - 8가지 공격 패턴 차단 확인
+- ✅ **동시 요청 처리** - 5개 병렬 요청 일관성 확인
+- ✅ **특수 문자 처리** - Unicode, emoji, HTML 태그
+- ✅ **대용량 데이터 시뮬레이션** - 큰 page_size 성능 테스트
+- ✅ **일관성 테스트** - 동일 요청 반복 시 일관된 결과
+
+**테스트 데이터**: 8+ tasks (다양한 엣지 케이스)
+
+**총 테스트 케이스**: 60개 (27 comprehensive + 33 advanced)
+**Pass Rate**: 100% (60/60)
 
 ### 7. Security Headers (iframe support)
 - ✅ Content-Security-Policy 헤더 확인
@@ -187,7 +219,8 @@ tests/
 ├── run-tests.sh                       # 테스트 실행 스크립트
 ├── docker-compose.test.yml            # 테스트 환경 Docker 구성
 └── integration/
-    └── label-studio-custom.test.js    # 통합 테스트 스위트
+    ├── label-studio-custom.test.js    # 통합 테스트 스위트 (일반)
+    └── custom-export-api.test.js      # Custom Export API 전용 테스트 (27 tests)
 ```
 
 ## CI/CD 통합

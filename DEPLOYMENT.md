@@ -1,6 +1,7 @@
 # Label Studio SSO Sample App - 배포 가이드
 
 ## 목차
+
 - [Docker 이미지 빌드](#docker-이미지-빌드)
 - [GitHub Container Registry 배포](#github-container-registry-배포)
 - [Kubernetes (AWS EKS) 배포](#kubernetes-aws-eks-배포)
@@ -83,11 +84,11 @@ docker compose -f docker-compose.dev.yml down
 
 ### 포함된 서비스
 
-| 서비스 | 이미지 | 포트 |
-|--------|--------|------|
-| PostgreSQL | `postgres:13.18` | 5432 |
-| Label Studio | `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32` | 8080 |
-| SSO App | `ghcr.io/aidoop/label-studio-sso-app:1.0.0` | 3000 |
+| 서비스       | 이미지                                             | 포트 |
+| ------------ | -------------------------------------------------- | ---- |
+| PostgreSQL   | `postgres:13.18`                                   | 5432 |
+| Label Studio | `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.38` | 8080 |
+| SSO App      | `ghcr.io/aidoop/label-studio-sso-app:1.0.0`        | 3000 |
 
 ### 환경변수 설정
 
@@ -326,17 +327,17 @@ open https://label-app.hatiolab.com
 
 ### 필수 환경 변수
 
-| 변수 | 설명 | 예시 | 기본값 |
-|------|------|------|--------|
-| `NODE_ENV` | 실행 환경 | `production` | `development` |
-| `PORT` | 서버 포트 | `3000` | `3000` (prod), `3001` (dev) |
-| `LABEL_STUDIO_URL` | Label Studio URL | `http://labelstudio:8080` | - |
-| `LABEL_STUDIO_API_TOKEN` | API Token | `abcd1234...` | - |
+| 변수                     | 설명             | 예시                      | 기본값                      |
+| ------------------------ | ---------------- | ------------------------- | --------------------------- |
+| `NODE_ENV`               | 실행 환경        | `production`              | `development`               |
+| `PORT`                   | 서버 포트        | `3000`                    | `3000` (prod), `3001` (dev) |
+| `LABEL_STUDIO_URL`       | Label Studio URL | `http://labelstudio:8080` | -                           |
+| `LABEL_STUDIO_API_TOKEN` | API Token        | `abcd1234...`             | -                           |
 
 ### 선택적 환경 변수
 
-| 변수 | 설명 | 예시 | 기본값 |
-|------|------|------|--------|
+| 변수          | 설명             | 예시                       | 기본값                           |
+| ------------- | ---------------- | -------------------------- | -------------------------------- |
 | `CORS_ORIGIN` | CORS 허용 도메인 | `https://app.hatiolab.com` | `http://hatiolab.localhost:3000` |
 
 ### Kubernetes 환경 변수 설정
@@ -354,7 +355,6 @@ data:
   LABEL_STUDIO_URL: "http://labelstudio-service.label-studio.svc.cluster.local:8080"
 
 ---
-
 # Secret (민감한 정보)
 apiVersion: v1
 kind: Secret
@@ -476,15 +476,15 @@ spec:
     matchLabels:
       app: label-studio-sso-app
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: label-studio
-    ports:
-    - protocol: TCP
-      port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: label-studio
+      ports:
+        - protocol: TCP
+          port: 3000
 ```
 
 ### 3. HTTPS Only

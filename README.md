@@ -92,6 +92,7 @@ sudo nano /etc/hosts
 **프로덕션 환경**:
 
 DNS A 레코드 설정:
+
 ```
 app.hatiolab.com     → <서버-IP>
 label.hatiolab.com   → <서버-IP>
@@ -189,6 +190,7 @@ docker compose down
 ```
 
 **사용되는 이미지**:
+
 - `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32` - Label Studio
 - `ghcr.io/aidoop/label-studio-sso-app:1.0.0` - SSO Sample App
 - `postgres:13.18` - PostgreSQL
@@ -217,11 +219,11 @@ make setup
 
 **생성되는 계정**:
 
-| 이메일 | 비밀번호 | 역할 |
-|--------|----------|------|
-| `admin@hatiolab.com` | `admin123!` | Admin |
+| 이메일                   | 비밀번호        | 역할      |
+| ------------------------ | --------------- | --------- |
+| `admin@hatiolab.com`     | `admin123!`     | Admin     |
 | `annotator@hatiolab.com` | `annotator123!` | Annotator |
-| `manager@hatiolab.com` | `manager123!` | Manager |
+| `manager@hatiolab.com`   | `manager123!`   | Manager   |
 
 ### 6. API 토큰 생성
 
@@ -241,10 +243,12 @@ docker compose restart backend
 브라우저에서 다음 URL 접속:
 
 **로컬 개발 환경**:
+
 - **Frontend**: http://hatiolab.localhost:3000
 - **Label Studio**: http://label.hatiolab.localhost:8080
 
 **프로덕션 환경**:
+
 - **Frontend**: https://app.hatiolab.com
 - **Label Studio**: https://label.hatiolab.com
 
@@ -321,6 +325,7 @@ Label Studio Custom (label-studio-sso 미들웨어)
 ```
 
 **인증 전환 메커니즘**:
+
 - **초기 인증**: JWT 토큰 (ls_auth_token) → Django Session (ls_sessionid)
 - **사용자 전환**: 새 JWT 발급 → iframe 재생성 → 새 세션 생성
 - **성능 최적화**: JWT 검증은 최초 1회만, 이후 세션 사용
@@ -332,6 +337,7 @@ Label Studio Custom (label-studio-sso 미들웨어)
 **파일**: `label-studio-sso/label_studio_sso/middleware.py`
 
 **주요 변경사항**:
+
 ```python
 # middleware.py - process_request()
 def process_request(self, request):
@@ -359,6 +365,7 @@ def process_response(self, request, response):
 ```
 
 **왜 이렇게 구현했나?**
+
 - 사용자 전환 시 기존 세션이 남아있어도 새 JWT가 우선순위를 가짐
 - JWT 검증 후 Django Session으로 전환하여 성능 향상
 - 불필요한 JWT 토큰 쿠키는 자동 삭제하여 보안 강화
@@ -369,13 +376,22 @@ def process_response(self, request, response):
 
 ```vue
 <iframe
-  :key="props.email"  ← 사용자 변경 시 완전히 새로운 iframe 생성
+  :key="props.email"
+  ←
+  사용자
+  변경
+  시
+  완전히
+  새로운
+  iframe
+  생성
   :src="iframeUrl"
   ...
 ></iframe>
 ```
 
 **왜 key를 사용하나?**
+
 - Vue의 key 변경 시 컴포넌트를 완전히 재생성
 - 사용자 전환 시 iframe 내부 상태 완전 초기화
 - 새 사용자의 JWT로 깨끗한 인증 시작
@@ -387,18 +403,19 @@ def process_response(self, request, response):
 ```javascript
 function clearSessionCookies(res) {
   // 사용자 전환 시 기존 Label Studio 세션 쿠키 삭제
-  res.clearCookie('ls_sessionid', {
-    domain: COOKIE_DOMAIN,  // .hatiolab.localhost (로컬) 또는 .hatiolab.com (프로덕션)
-    path: '/'
+  res.clearCookie("ls_sessionid", {
+    domain: COOKIE_DOMAIN, // .hatiolab.localhost (로컬) 또는 .hatiolab.com (프로덕션)
+    path: "/",
   });
-  res.clearCookie('ls_csrftoken', {
-    domain: COOKIE_DOMAIN,  // 환경변수로 설정
-    path: '/'
+  res.clearCookie("ls_csrftoken", {
+    domain: COOKIE_DOMAIN, // 환경변수로 설정
+    path: "/",
   });
 }
 ```
 
 **인증 흐름 전체 정리**:
+
 1. 사용자 선택 → Backend가 기존 세션 쿠키 삭제
 2. Backend가 새 JWT 발급 → ls_auth_token 쿠키 설정
 3. Frontend iframe 재생성 (`:key="props.email"`)
@@ -496,6 +513,7 @@ curl -X POST https://label.hatiolab.com/api/webhooks \
 ```
 
 **주의사항**:
+
 - `send_payload: true`로 설정해야 `completed_by_info` 필드가 포함됩니다
 - `url`은 Docker 네트워크 내부 주소를 사용 (`backend:3001`)
 - 프로젝트마다 별도로 webhook을 등록해야 합니다
@@ -503,14 +521,17 @@ curl -X POST https://label.hatiolab.com/api/webhooks \
 #### Webhook Monitor 사용
 
 1. **접속**:
+
    - 로컬: http://hatiolab.localhost:3000 로그인 후 "🔔 Webhook Monitor" 탭 클릭
    - 프로덕션: https://app.hatiolab.com 로그인 후 "🔔 Webhook Monitor" 탭 클릭
 
 2. **실시간 모니터링**:
+
    - SSE (Server-Sent Events)로 실시간 이벤트 자동 표시
    - 연결 상태: 우측 상단 "Connected" 표시 확인
 
 3. **Annotation 생성 테스트**:
+
    ```
    1. "📁 Projects" 탭에서 프로젝트 선택
    2. Label Studio에서 annotation 생성/수정/삭제
@@ -519,11 +540,13 @@ curl -X POST https://label.hatiolab.com/api/webhooks \
    ```
 
 4. **이벤트 필터링**:
+
    - **All Events**: 모든 이벤트 표시
    - **Regular Users**: 일반 사용자 이벤트만 표시
    - **Superuser Only**: Admin 이벤트만 표시
 
 5. **이벤트 정보 확인**:
+
    ```json
    {
      "action": "ANNOTATION_CREATED",
@@ -540,6 +563,7 @@ curl -X POST https://label.hatiolab.com/api/webhooks \
    ```
 
 6. **Superuser 필터링 시연**:
+
    ```
    1. Admin으로 로그인하여 annotation 생성
       → "⚠️ SKIPPED: Admin annotation" 표시
@@ -595,6 +619,7 @@ if (userInfo.is_superuser) {
 ```
 
 **실무 활용 예시**:
+
 1. Annotator가 annotation 생성 → Webhook 발생
 2. MLOps 시스템이 annotation 수신
 3. `completed_by_info.is_superuser === false` 확인
@@ -731,11 +756,12 @@ npm run dev
 const allowedUsers = [
   "admin@hatiolab.com",
   "annotator@hatiolab.com",
-  "manager@hatiolab.com"
+  "manager@hatiolab.com",
 ];
 ```
 
 **주요 엔드포인트**:
+
 - `GET /api/sso/token?email=<email>` - JWT 토큰 발급/갱신
 - `GET /api/projects` - 프로젝트 목록 조회
 - `POST /api/webhooks/annotation` - Webhook 이벤트 수신
@@ -749,11 +775,7 @@ const allowedUsers = [
 
 ```vue
 <!-- 사용자 전환 시 iframe 재생성 -->
-<iframe
-  :key="props.email"
-  :src="iframeUrl"
-  ...
-></iframe>
+<iframe :key="props.email" :src="iframeUrl" ...></iframe>
 ```
 
 ```javascript
@@ -768,6 +790,7 @@ iframeUrl.value = `${LABEL_STUDIO_URL}/projects/${
 ```
 
 **주요 구현**:
+
 - `:key="props.email"`: 사용자 변경 시 iframe 완전히 재생성
 - Django Session 사용으로 JWT 자동 갱신 로직 제거
 
@@ -880,6 +903,7 @@ label.hatiolab.com         → Label Studio (포트 8080)
 ```
 
 **A 레코드 설정**:
+
 ```
 app.hatiolab.com           → <서버-IP>
 label.hatiolab.com         → <서버-IP>
@@ -943,6 +967,7 @@ server {
 ### v1.20.0-sso.13 → v1.20.0-sso.14
 
 **주요 변경사항:**
+
 - ✅ sw.js 파일 라우팅 경로 수정
 - ✅ Service Worker 500 Internal Server Error 해결
 - ✅ URL 패턴에서 정확한 정적 파일 경로 사용 (`static_build/js/sw.js`)
@@ -967,6 +992,7 @@ curl -I http://localhost:8080/sw.js
 ### v1.20.0-sso.12 → v1.20.0-sso.13
 
 **주요 변경사항:**
+
 - ✅ 쿠키 이름 충돌 방지: `ls_sessionid`, `ls_csrftoken`
 - ✅ 같은 도메인에서 여러 Django 앱 실행 시 충돌 방지
 - ✅ label-studio-sso v6.0.7 패키지 업데이트
@@ -992,6 +1018,7 @@ docker compose up -d
 ### v1.20.0-sso.11 → v1.20.0-sso.12
 
 **주요 변경사항:**
+
 - ✅ Static Files Collection 추가 (`sw.js` 파일 404 오류 해결)
 - ✅ Custom Export API 날짜 필터 타임존 처리 개선
 - ✅ 프로젝트 구조 개선 (scripts/ 디렉토리 통합)
@@ -1026,6 +1053,7 @@ curl -X POST http://localhost:8080/api/custom/export/ \
 ```
 
 **주의사항:**
+
 - 데이터베이스 백업 권장
 - 다운타임 없이 업그레이드 가능 (데이터베이스 스키마 변경 없음)
 

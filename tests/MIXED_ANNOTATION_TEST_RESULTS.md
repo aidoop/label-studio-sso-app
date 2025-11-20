@@ -1,7 +1,7 @@
 # Mixed Annotation Test Results
 
 **Date**: 2025-11-19
-**Version**: v1.20.0-sso.37
+**Version**: v1.20.0-sso.38
 **Status**: ✅ PASSED
 
 ---

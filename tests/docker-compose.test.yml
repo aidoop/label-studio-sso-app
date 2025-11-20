@@ -31,7 +31,7 @@ services:
       - postgres_test_data:/var/lib/postgresql/data
 
     ports:
-      - "5433:5432"  # Different port to avoid conflict
+      - "5433:5432" # Different port to avoid conflict
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -47,7 +47,7 @@ services:
   # Label Studio Custom (테스트용)
   # ==============================================================================
   labelstudio-test:
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.36
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.38
     container_name: label-studio-app-test
     restart: unless-stopped
 
@@ -94,7 +94,7 @@ services:
       - labelstudio_test_data:/label-studio/data
 
     ports:
-      - "8081:8080"  # Different port to avoid conflict
+      - "8081:8080" # Different port to avoid conflict
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

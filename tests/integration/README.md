@@ -301,7 +301,7 @@ Execution time: ~5.4 seconds
 
 ## 테스트 환경
 
-- Label Studio Custom: 1.20.0-sso.37 (test)
+- Label Studio Custom: 1.20.0-sso.38 (test)
 - Node.js: >=18.0.0
 - Docker Compose
 - 실행 중인 label-studio-custom 컨테이너

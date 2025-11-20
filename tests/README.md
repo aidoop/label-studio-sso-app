@@ -70,6 +70,7 @@
 ### 8. Prediction Model Version
 - ✅ Prediction 조회 시 `model_version` 필드 정상 반환 확인
 - ⚠️  **참고**: v1.20.0-sso.37부터 AIV Prefix 기능 제거됨
+- ✨  **최신**: v1.20.0-sso.38에서 Mixed Annotation 처리 개선
 
 ### 9. Media Upload API
 - ✅ 미디어 업로드 API 접근성 확인

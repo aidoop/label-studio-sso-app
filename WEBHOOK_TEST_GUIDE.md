@@ -67,6 +67,7 @@ curl -X POST "${LS_URL}/api/webhooks" \
 ```
 
 **성공 응답 예시:**
+
 ```json
 {
   "id": 1,
@@ -125,18 +126,21 @@ curl -X GET "${LS_URL}/api/webhooks" \
 ### 시나리오 A: 일반 사용자 (Annotator) 테스트
 
 1. **Annotator로 로그인**
+
    ```
    - "Login as Annotator" 클릭
    - annotator@hatiolab.com
    ```
 
 2. **프로젝트 선택**
+
    ```
    - "📁 Projects" 탭
    - 프로젝트 카드 클릭
    ```
 
 3. **Annotation 생성**
+
    ```
    - Label Studio에서 Task 선택
    - Annotation 생성 (라벨 추가)
@@ -150,6 +154,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
    ```
 
 **예상 결과:**
+
 ```
 🟢 ANNOTATION_CREATED  [14:32:15]
 👤 annotator@hatiolab.com
@@ -160,12 +165,14 @@ curl -X GET "${LS_URL}/api/webhooks" \
 ### 시나리오 B: Superuser (Admin) 테스트
 
 1. **Admin으로 로그인**
+
    ```
    - "Logout" 클릭
    - "Login as Admin" 클릭
    ```
 
 2. **Annotation 생성**
+
    ```
    - 프로젝트 선택
    - Annotation 생성
@@ -174,6 +181,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
 3. **Webhook Monitor 확인**
 
 **예상 결과:**
+
 ```
 🟢 ANNOTATION_CREATED  [14:35:22]
 👤 admin@hatiolab.com
@@ -184,6 +192,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
 ### 시나리오 C: 필터링 테스트
 
 1. **여러 사용자로 Annotation 생성**
+
    ```
    - Admin: 3개 annotation
    - Annotator: 5개 annotation
@@ -191,6 +200,7 @@ curl -X GET "${LS_URL}/api/webhooks" \
    ```
 
 2. **필터 적용**
+
    ```
    - "All Events" 클릭 → 10개 표시
    - "Regular Users" 클릭 → 7개 표시 (Annotator + Manager)
@@ -363,14 +373,17 @@ docker compose logs backend | grep "Full Payload" -A 30
 ### send_payload 옵션 검증
 
 **send_payload: false인 경우:**
+
 ```json
 {
   "action": "ANNOTATION_CREATED"
 }
 ```
+
 → ❌ `completed_by_info` 없음
 
 **send_payload: true인 경우:**
+
 ```json
 {
   "action": "ANNOTATION_CREATED",
@@ -379,6 +392,7 @@ docker compose logs backend | grep "Full Payload" -A 30
   }
 }
 ```
+
 → ✅ `completed_by_info` 포함
 
 ---
@@ -408,9 +422,11 @@ docker compose exec labelstudio ping backend -c 3
 ### 2. completed_by_info가 없음
 
 **원인:**
+
 - `send_payload: false`로 설정됨
 
 **해결:**
+
 ```bash
 # Webhook 업데이트
 curl -X PATCH ${LS_URL}/api/webhooks/1 \
@@ -422,9 +438,11 @@ curl -X PATCH ${LS_URL}/api/webhooks/1 \
 ### 3. SSE 연결이 끊김
 
 **증상:**
+
 - Webhook Monitor에 "Disconnected" 표시
 
 **해결:**
+
 ```bash
 # 1. Backend 재시작
 docker compose restart backend
@@ -438,6 +456,7 @@ docker compose logs backend | grep "SSE"
 ### 4. Label Studio에서 custom_webhooks 모듈 로드 실패
 
 **확인:**
+
 ```bash
 # 로그 확인
 docker compose logs labelstudio | grep "custom_webhooks"
@@ -447,6 +466,7 @@ docker compose logs labelstudio | grep "custom_webhooks"
 ```
 
 **해결:**
+
 ```bash
 # 1. 이미지 재빌드
 cd /Users/super/Documents/GitHub/label-studio-custom
@@ -476,13 +496,15 @@ docker compose up -d
 ### 프로덕션 배포
 
 1. **Label Studio Custom Image 배포**
+
    ```bash
    cd /Users/super/Documents/GitHub/label-studio-custom
-   docker tag label-studio-custom:latest your-registry/label-studio-custom:1.20.0-sso.11
-   docker push your-registry/label-studio-custom:1.20.0-sso.11
+   docker tag label-studio-custom:latest your-registry/label-studio-custom:1.20.0-sso.38
+   docker push your-registry/label-studio-custom:1.20.0-sso.38
    ```
 
 2. **환경 변수 설정**
+
    ```bash
    # .env 파일 업데이트
    LABEL_STUDIO_HOST=https://labelstudio.yourdomain.com

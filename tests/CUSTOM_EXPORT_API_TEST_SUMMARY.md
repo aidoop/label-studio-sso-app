@@ -2,7 +2,7 @@
 
 **Date**: 2025-11-19 (Updated)
 **Environment**: label-studio-sso-app
-**Label Studio Version**: 1.20.0-sso.37 (test)
+**Label Studio Version**: 1.20.0-sso.38 (test)
 
 ---
 

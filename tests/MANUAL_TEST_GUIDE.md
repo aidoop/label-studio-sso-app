@@ -1,7 +1,7 @@
 # Custom Export API - 직접 테스트 가이드
 
 **작성일**: 2025-11-19
-**버전**: v1.20.0-sso.37
+**버전**: v1.20.0-sso.38
 **Status**: ✅ 테스트 데이터 생성 완료 (100 tasks, 75 annotations)
 
 ---

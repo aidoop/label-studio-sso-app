@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Integration Tests for Label Studio Custom
+
 - **통합 테스트 시스템 구축**: label-studio-custom의 모든 커스터마이징 기능을 검증하는 자동화된 테스트
 - **테스트 범위** (16개 통과 / 1개 스킵):
   - ✅ Version API - Custom Version Override
@@ -26,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ✅ Health Check
 
 #### Test Infrastructure
+
 - **테스트 파일 구조**:
+
   - `tests/integration/label-studio-custom.test.js` - 통합 테스트 스위트
   - `tests/package.json` - Node.js 테스트 설정
   - `tests/run-tests.sh` - 테스트 실행 스크립트
@@ -34,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tests/README.md` - 테스트 가이드 문서
 
 - **테스트 실행 방법**:
+
   ```bash
   cd tests
   ./run-tests.sh              # 기본 실행
@@ -42,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
 
 - **독립 테스트 환경**:
+
   ```bash
   docker compose -f tests/docker-compose.test.yml up -d
   LABEL_STUDIO_URL=http://localhost:8081 ./tests/run-tests.sh
@@ -49,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
 
 - **기술 스택**:
+
   - Node.js 내장 테스트 러너 (Node 18+)
   - fetch API를 사용한 HTTP 요청
   - TAP 포맷 출력
@@ -59,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Documentation Updates
+
 - **README.md**: 통합 테스트 섹션 추가
 - **tests/README.md**: 상세한 테스트 가이드 작성
 
@@ -67,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image Update
+
 - **label-studio-custom**: 1.20.0-sso.35 → 1.20.0-sso.36
 - **버그 수정**:
   - User Deletion API 수정
@@ -87,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image Update
+
 - **label-studio-custom**: 1.20.0-sso.33 → 1.20.0-sso.34
 - **새로운 기능**:
   - AIV Prefix for Prediction Model Version
@@ -103,12 +112,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### 도메인 하드코딩 제거 - 환경변수로 전환
+
 - **주요 변경 사항**:
   - 모든 `nubison.localhost` 하드코딩 제거
   - 환경변수 기반 도메인 설정으로 변경
   - 프로덕션 배포 유연성 향상 (예: hatiolab.com)
 
 #### Backend (server.js)
+
 - **새로운 환경변수**:
   - `FRONTEND_URL`: SSO 앱 프론트엔드 URL (기본값: `http://hatiolab.localhost:3000`)
   - `COOKIE_DOMAIN`: 쿠키 공유 도메인 (기본값: `.hatiolab.localhost`)
@@ -119,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 로그인 리다이렉트 URL: FRONTEND_URL 환경변수 사용
 
 #### Frontend
+
 - **새로운 환경변수**:
   - `VITE_LABEL_STUDIO_URL`: Label Studio URL (기본값: `http://label.hatiolab.localhost:8080`)
   - `VITE_DEV_HOST`: Vite 개발 서버 호스트 (기본값: `hatiolab.localhost`)
@@ -129,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `vite.config.js`: VITE_DEV_HOST, VITE_BACKEND_URL 사용
 
 #### Configuration
+
 - **`.env.example`**:
   - 새로운 환경변수 문서화
   - 로컬 개발(hatiolab.localhost) 및 프로덕션(hatiolab.com) 예시 추가
@@ -139,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Frontend: VITE_LABEL_STUDIO_URL, VITE_DEV_HOST, VITE_DEV_PORT 추가
 
 #### Documentation
+
 - **README.md**:
   - 환경변수 섹션 추가 (로컬/프로덕션 예시)
   - 프로덕션 배포 가이드 확장 (hatiolab.com 예시)
@@ -149,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 환경변수 설정 가이드 추가 (로컬/프로덕션)
 
 ### Benefits
+
 - ✅ 코드 수정 없이 도메인 변경 가능
 - ✅ 다중 환경 배포 간소화 (개발/스테이징/프로덕션)
 - ✅ Docker 이미지 재사용성 향상
@@ -159,6 +174,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.31 → **v1.20.0-sso.32**
 - **주요 변경 사항**:
   - Version API의 `release` 필드 오버라이드
@@ -169,6 +185,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Backend: Label Studio Version API 프록시
+
 - **목적**: 프론트엔드에서 Label Studio 버전 정보 조회
 - **엔드포인트**: `GET /api/labelstudio/version`
 - **기능**:
@@ -198,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.27 → **v1.20.0-sso.29**
 - **주요 변경 사항**:
   - Admin User List API 추가 (`GET /api/admin/users/list`)
@@ -208,6 +226,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Superuser 생성 및 관리 기능 (TestUserCreation)
+
 - **목적**: 테스트 환경에서 superuser 생성 및 확인 기능 추가
 - **Frontend 변경사항**:
   - `TestUserCreation.vue`: Superuser 생성 체크박스 추가
@@ -234,6 +253,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.24 → **v1.20.0-sso.25**
 - **주요 변경 사항**:
   - Custom SSO Token API의 JSON 응답 오류 수정
@@ -246,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.23 → **v1.20.0-sso.24**
 - **주요 변경 사항**:
   - `SSO_AUTO_CREATE_USERS` 환경변수 제거 (False로 고정)
@@ -259,6 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.22 → **v1.20.0-sso.23**
 - **주요 변경 사항**:
   - Custom SSO Token Validation API 추가 (사전 사용자 검증)
@@ -268,6 +290,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **참조**: [label-studio-custom v1.20.0-sso.23 CHANGELOG](https://github.com/aidoop/label-studio-custom/blob/main/CHANGELOG.md#1200-sso23---2025-11-07)
 
 #### Backend API 개선
+
 - **Custom SSO Token Validation API 사용**:
   - 기존 `/api/sso/token` → `/api/custom/sso/token`으로 변경
   - 사용자 존재 여부를 먼저 검증한 후 JWT 토큰 발급
@@ -277,6 +300,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - iframe 환경에서 SSO 오류 페이지 테스트 용도
 
 #### Frontend 테스트 기능 추가
+
 - **새로운 테스트 버튼**:
   - 🔴 "Login as Non-existent User": Custom SSO Token API 에러 테스트
     - Label Studio에 존재하지 않는 사용자로 토큰 발급 시도
@@ -287,6 +311,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - iframe에서 SSO 전용 로그인 페이지 표시 확인
 
 #### Docker Compose 설정 개선
+
 - **환경변수 주석 정리**:
   - `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` 관련 주석 명확화
   - 허용 값: `1/true/yes/on` (True), `0/false/no/off` (False)
@@ -295,12 +320,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### 테스트 사용자 지원
+
 - `nonexistent@nubison.io`: Label Studio에 존재하지 않는 테스트 사용자
 - Backend 허용 사용자 목록에 추가
 
 ### Technical Details
 
 #### Backend Changes (`server.js`)
+
 ```javascript
 // Before
 const response = await fetch(`${LABEL_STUDIO_URL}/api/sso/token`, {...});
@@ -310,6 +337,7 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
 ```
 
 #### Frontend Changes (`App.vue`)
+
 - 3단계 테스트 플로우 구현:
   1. Valid token 발급 (admin@nubison.io)
   2. 프로젝트 리스트 가져오기
@@ -320,6 +348,7 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
 ### Changed
 
 #### Label Studio Custom Image 버전 업데이트
+
 - **Label Studio Custom Image**: v1.20.0-sso.17 → v1.20.0-sso.18
 - **변경 내용**: PostgreSQL 환경변수명 유연화
   - `POSTGRE_*` 환경변수를 우선적으로 사용
@@ -332,11 +361,13 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
 ### Changed
 
 #### 프로젝트 구조 재구성
+
 - Label Studio 커스텀 이미지 관련 파일을 별도 저장소([label-studio-custom](https://github.com/aidoop/label-studio-custom))로 분리
 - 이 프로젝트는 이제 샘플 애플리케이션에만 집중
 - docker-compose.yml에서 커스텀 이미지를 외부 이미지로 사용 (`label-studio-custom:local` 또는 `ghcr.io/aidoop/label-studio-custom:1.20.0-sso.32`)
 
 #### 제거된 파일 (→ label-studio-custom으로 이동)
+
 - `Dockerfile`
 - `config/`
 - `custom-permissions/`
@@ -345,12 +376,14 @@ const response = await fetch(`${LABEL_STUDIO_URL}/api/custom/sso/token`, {...});
 - `scripts/`
 
 #### 문서 업데이트
+
 - README.md: 샘플 애플리케이션 중심으로 재작성
 - 커스텀 이미지 빌드 가이드 추가 (로컬 / Registry)
 
 ### Added
 
 #### 새 문서
+
 - PROJECT_RESTRUCTURE_PROPOSAL.md: 프로젝트 재구성 제안서
 
 ### Migration Guide
@@ -386,6 +419,7 @@ docker compose up -d
 ### Added
 
 #### hideHeader 기능
+
 - iframe 임베딩 시 Label Studio 헤더를 완전히 숨기는 기능 구현
 - URL 파라미터 `?hideHeader=true` 지원
 - JavaScript로 `--header-height` CSS 변수 강제 0px 설정
@@ -393,6 +427,7 @@ docker compose up -d
 - 파일: `custom-templates/base.html`
 
 #### Annotation Ownership 제어
+
 - 사용자가 자신의 annotation만 수정/삭제할 수 있도록 제한
 - `IsAnnotationOwnerOrReadOnly` permission 클래스 구현
 - `AnnotationOwnershipMixin` 구현으로 기존 View 확장
@@ -407,6 +442,7 @@ docker compose up -d
   - `custom-api/annotations.py`
 
 #### SSO 사용자 전환 개선
+
 - Django 세션 쿠키 자동 클리어 기능 추가
 - `ls_sessionid` 및 `ls_csrftoken` 쿠키 삭제
 - iframe URL에 타임스탬프 추가하여 강제 reload
@@ -415,29 +451,34 @@ docker compose up -d
   - `frontend/src/components/LabelStudioWrapper.vue` (lines 122-139)
 
 #### Docker Compose 환경
+
 - PostgreSQL 13.18 데이터베이스 통합
-- Label Studio 1.20.0 + label-studio-sso v6.0.7
+- Label Studio 1.20.0 + label-studio-sso v6.0.8
 - Express.js 백엔드 (SSO 토큰 관리)
 - Vue 3 프론트엔드
 - 파일: `docker-compose.yml`
 
 #### 설정 파일
+
 - `config/label_studio.py`: Django settings with SSO integration
 - `config/urls_simple.py`: URL routing with custom API override
 - `.env.example`: Environment variables template
 
 #### 초기화 스크립트
+
 - `scripts/setup.sh`: 자동 사용자 생성 스크립트
 - Makefile 명령어 추가 (setup-hosts, setup, create-token, logs, reset-db)
 
 ### Changed
 
 #### 아키텍처
+
 - 서브도메인 변경: `*.localhost` → `*.nubison.localhost`
 - Label Studio URL 변경: `labelstudio.localhost:8080` → `label.nubison.localhost:8080`
 - 쿠키 도메인 변경: `.localhost` → `.nubison.localhost`
 
 #### Documentation
+
 - README.md 완전 재작성 (Docker Compose 기반)
 - 주요 기능 섹션 추가
 - 문제 해결 가이드 추가
@@ -446,27 +487,32 @@ docker compose up -d
 ### Fixed
 
 #### SSO 인증
+
 - 사용자 전환 시 이전 세션 유지 문제 해결
 - JWT 토큰 갱신 로직 개선
 
 #### UI/UX
+
 - hideHeader 기능 안정성 개선
 - CSS 변수 강제 적용 메커니즘 추가
 
 ### Security
 
 #### API 보안
+
 - Annotation API에 소유권 기반 접근 제어 추가
 - 403 Forbidden 응답으로 권한 없는 수정/삭제 차단
 - Admin 계정은 모든 annotation 접근 가능
 
 #### 세션 관리
+
 - 사용자 전환 시 이전 세션 쿠키 자동 삭제
 - Cross-user session 공유 방지
 
 ## Version History
 
 ### v1.0.0 (2025-10-22)
+
 - Initial release with Docker Compose
 - SSO authentication (Native JWT)
 - hideHeader functionality
@@ -474,6 +520,7 @@ docker compose up -d
 - User switching support
 
 ### v0.1.0 (Initial Development)
+
 - Basic SSO integration test
 - Subdomain approach with `.localhost`
 - Direct Label Studio access (no proxy)
@@ -483,6 +530,7 @@ docker compose up -d
 ### From v0.1.0 to v1.0.0
 
 #### Environment Changes
+
 ```bash
 # Old (.localhost)
 nubison.localhost:3000
@@ -494,15 +542,17 @@ label.nubison.localhost:8080
 ```
 
 #### Cookie Domain Changes
+
 ```javascript
 // Old
-domain: '.localhost'
+domain: ".localhost";
 
 // New
-domain: '.nubison.localhost'
+domain: ".nubison.localhost";
 ```
 
 #### Deployment Method
+
 ```bash
 # Old (3 separate terminals)
 terminal 1: label-studio start
@@ -518,27 +568,32 @@ docker compose up -d
 ### v1.0.0
 
 #### Frontend Read-Only UI
+
 - 프론트엔드에서 다른 사용자의 annotation 수정 버튼이 자동으로 비활성화되지 않음
 - 현재는 수정 시도 시 403 에러로 차단됨
 - 향후 버전에서 프론트엔드 UI 레벨 비활성화 추가 예정
 
 #### Browser Cache
+
 - hideHeader 기능 변경 시 브라우저 캐시로 인해 즉시 반영되지 않을 수 있음
 - 해결: Hard Refresh (Cmd/Ctrl + Shift + R)
 
 ## Roadmap
 
 ### v1.1.0 (Planned)
+
 - [ ] Frontend read-only UI for non-owner annotations
 - [ ] Annotation history and versioning
 - [ ] Advanced permission management
 
 ### v1.2.0 (Planned)
+
 - [ ] Multi-project support
 - [ ] Custom annotation templates
 - [ ] Export/Import functionality
 
 ### v2.0.0 (Future)
+
 - [ ] Label Studio 1.21+ support
 - [ ] Advanced SSO features (SAML, OAuth2)
 - [ ] Real-time collaboration
@@ -546,6 +601,7 @@ docker compose up -d
 ## Support
 
 For questions or issues:
+
 - GitHub Issues: [Report a bug or request a feature]
 - Documentation: See README.md and guides
 
@@ -557,5 +613,6 @@ For questions or issues:
 ---
 
 **Note**: This project is based on Label Studio open source project.
+
 - Label Studio: https://github.com/HumanSignal/label-studio
 - label-studio-sso: https://pypi.org/project/label-studio-sso/

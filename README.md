@@ -1072,7 +1072,7 @@ curl -X POST http://localhost:8080/api/custom/export/ \
 ### Label Studio 공식
 
 - [Label Studio 공식 문서](https://labelstud.io/guide/)
-- [label-studio-sso v6.0.7](https://pypi.org/project/label-studio-sso/6.0.7/)
+- [label-studio-sso v6.0.8](https://pypi.org/project/label-studio-sso/6.0.8/)
 - [Label Studio GitHub](https://github.com/HumanSignal/label-studio)
 
 ## 통합 테스트

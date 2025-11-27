@@ -72,15 +72,11 @@ services:
   # Label Studio (SSO 통합)
   # ==============================================================================
   labelstudio:
-    # GitHub Container Registry 공식 이미지 사용 (v1.20.0-sso.38 - Release field override)
-    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.38
+    # GitHub Container Registry 배포 이미지
+    image: ghcr.io/aidoop/label-studio-custom:1.20.0-sso.41
 
-    # 또는 latest 태그 (최신 버전, 프로덕션에서는 특정 버전 권장)
-    # image: ghcr.io/aidoop/label-studio-custom:latest
-
-    # 또는 로컬에서 빌드한 이미지 (개발용):
+    # 로컬 테스트용 이미지 (개발 시 아래 주석 해제)
     # image: label-studio-custom:local
-    # image: label-studio-custom:1.20.0-sso.38
 
     container_name: label-studio-app
 

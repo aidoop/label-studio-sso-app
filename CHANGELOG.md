@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.10] - 2025-12-11
+
+### Updated
+
+#### Label Studio Custom 업데이트 (v1.20.0-sso.44)
+
+- **Date Filter SPA 네비게이션 버그 수정**
+  - 라벨링 뷰에서 Data Manager로 돌아갈 때 날짜 필터 UI가 표시되지 않던 문제 해결
+  - 다중 전략 SPA Navigation Handler 구현 (URL 감지, MutationObserver, 주기적 체크)
+
+- **Import 버튼 숨김** (v1.20.0-sso.43)
+  - Data Manager에서 Import 버튼 숨김 처리
+  - 외부 시스템을 통한 데이터 Import만 허용하여 데이터 일관성 유지
+
 ## [1.0.9] - 2025-11-14
 
 ### Added

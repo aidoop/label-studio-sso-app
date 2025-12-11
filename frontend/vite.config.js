@@ -8,7 +8,7 @@ export default defineConfig({
     port: parseInt(process.env.VITE_DEV_PORT || "3000"),
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://hatiolab.localhost:3001',
+        target: process.env.VITE_PROXY_TARGET || 'http://backend:3001',
         changeOrigin: true,
       },
     },
